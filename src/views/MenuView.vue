@@ -15,8 +15,9 @@ const searchQuery = ref<string>('')
 watch(
   () => cafeStore.topCategories,
   (cats) => {
-    if (cats.length > 0 && activeCategory.value === null) {
-      activeCategory.value = cats[0].id
+    const first = cats[0]
+    if (first !== undefined && activeCategory.value === null) {
+      activeCategory.value = first.id
     }
   },
   { immediate: true },
