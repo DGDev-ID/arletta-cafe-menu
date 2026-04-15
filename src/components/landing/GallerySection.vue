@@ -30,6 +30,11 @@ const galleryImages = [
     alt: 'Barista at work',
     span: 'col-span-2',
   },
+  {
+    src: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80',
+    alt: 'Coffee setup',
+    span: 'col-span-2',
+  },
 ]
 </script>
 
