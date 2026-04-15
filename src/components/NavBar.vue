@@ -15,7 +15,7 @@ const { cafeName, locationLabel } = useLocation()
         <div class="flex items-center justify-between">
           <!-- Logo & Cafe Name -->
           <RouterLink
-            :to="{ path: '/', query: route.query }"
+            :to="{ path: '/menu', query: route.query }"
             class="flex items-center gap-2 text-white no-underline"
           >
             <i class="pi pi-coffee text-2xl text-accent"></i>

@@ -14,7 +14,7 @@ const cartStore = useCartStore()
       <div class="max-w-3xl mx-auto">
         <div class="flex items-center gap-3">
           <RouterLink
-            :to="{ path: '/', query: route.query }"
+            :to="{ path: '/menu', query: route.query }"
             class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/15 hover:bg-white/25 text-white transition-colors duration-200"
           >
             <i class="pi pi-arrow-left text-sm"></i>
@@ -34,7 +34,7 @@ const cartStore = useCartStore()
         <h3 class="text-lg font-semibold text-text mb-2">Keranjang Kosong</h3>
         <p class="text-sm text-text-light mb-6">Belum ada item yang ditambahkan</p>
         <RouterLink
-          :to="{ path: '/', query: route.query }"
+          :to="{ path: '/menu', query: route.query }"
           class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200 text-sm"
         >
           <i class="pi pi-arrow-left text-xs"></i>
@@ -76,7 +76,7 @@ const cartStore = useCartStore()
         </div>
         <div class="flex gap-3">
           <RouterLink
-            :to="{ path: '/', query: route.query }"
+            :to="{ path: '/menu', query: route.query }"
             class="flex-1 text-center bg-secondary hover:bg-secondary text-text font-medium py-3 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-1.5"
           >
             <i class="pi pi-plus text-xs"></i>

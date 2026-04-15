@@ -7,6 +7,11 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      name: 'landing',
+      component: () => import('@/views/LandingView.vue'),
+    },
+    {
+      path: '/menu',
       name: 'menu',
       component: MenuView,
       meta: { requiresLocation: true },
@@ -29,7 +34,11 @@ const router = createRouter({
       component: () => import('@/views/InvalidAccessView.vue'),
     },
   ],
-  scrollBehavior() {
+  scrollBehavior(to) {
+    // For landing page hash links
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
     return { top: 0 }
   },
 })

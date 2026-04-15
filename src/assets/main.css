@@ -15,6 +15,24 @@
   --color-danger: #dc3545;
   --color-success: #28a745;
 
+  /* Landing page theme colors */
+  --color-brown-50: #fdf8f0;
+  --color-brown-100: #f5e6d3;
+  --color-brown-200: #e8cba8;
+  --color-brown-300: #d4a574;
+  --color-brown-400: #c4894e;
+  --color-brown-500: #a0673a;
+  --color-brown-600: #7a4e2d;
+  --color-brown-700: #5c3a22;
+  --color-brown-800: #3e2718;
+  --color-brown-900: #2a1a10;
+
+  --color-cream: #faf6f0;
+  --color-cream-dark: #f0e8db;
+  --color-gold: #c9a84c;
+  --color-gold-light: #e0cc7a;
+
+  --font-heading: 'Playfair Display', serif;
   --font-sans: 'Poppins', sans-serif;
 }
 
@@ -122,4 +140,63 @@
 
 .animate-slide-down {
   animation: slideDown 0.4s ease-out forwards;
+}
+
+/* ── Landing Page Styles ───────────────────────────────────── */
+
+/* Scrollbar (landing) */
+.landing-page ::-webkit-scrollbar {
+  width: 8px;
+}
+.landing-page ::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+.landing-page ::-webkit-scrollbar-thumb {
+  background: var(--color-brown-300);
+  border-radius: 4px;
+}
+.landing-page ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brown-500);
+}
+
+/* Fade-in Animation (used by landing page scroll observer) */
+.fade-in {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.8s ease-out,
+    transform 0.8s ease-out;
+}
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-in-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition:
+    opacity 0.8s ease-out,
+    transform 0.8s ease-out;
+}
+.fade-in-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.fade-in-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition:
+    opacity 0.8s ease-out,
+    transform 0.8s ease-out;
+}
+.fade-in-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Section spacing (landing) */
+.landing-page section {
+  overflow: hidden;
 }

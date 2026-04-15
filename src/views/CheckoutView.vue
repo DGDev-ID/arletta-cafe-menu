@@ -34,7 +34,7 @@ async function handleOrder() {
 }
 
 function backToMenu() {
-  router.push({ path: '/', query: route.query })
+  router.push({ path: '/menu', query: route.query })
 }
 </script>
 
@@ -103,7 +103,7 @@ function backToMenu() {
         <h3 class="text-lg font-semibold text-text mb-2">Belum Ada Pesanan</h3>
         <p class="text-sm text-text-light mb-6">Pilih menu terlebih dahulu</p>
         <RouterLink
-          :to="{ path: '/', query: route.query }"
+          :to="{ path: '/menu', query: route.query }"
           class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200 text-sm"
         >
           <i class="pi pi-arrow-left text-xs"></i>
