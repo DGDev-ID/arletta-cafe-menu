@@ -10,11 +10,10 @@ const props = defineProps<{
 
 const cartStore = useCartStore()
 const toast = useToast()
-const isAdding = ref(false)
+const isLoading = ref(false)
 
 const price = computed(() => parseFloat(props.item.price))
 
-// Check if this item is already in the cart and get its quantity
 const cartItem = computed(() => cartStore.items.find((ci) => ci.id === props.item.id))
 const inCart = computed(() => !!cartItem.value)
 const quantity = computed(() => cartItem.value?.quantity ?? 0)
@@ -22,26 +21,78 @@ const quantity = computed(() => cartItem.value?.quantity ?? 0)
 const placeholderImage =
   'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop'
 
-function handleAdd() {
-  isAdding.value = true
-  cartStore.addToCart(props.item)
-  toast.add({
-    severity: 'success',
-    summary: 'Ditambahkan!',
-    detail: `${props.item.name} ditambahkan ke keranjang`,
-    life: 2000,
-  })
-  setTimeout(() => {
-    isAdding.value = false
-  }, 500)
+async function handleAdd() {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    const result = await cartStore.checkAndAdd(props.item)
+    if (result.success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Ditambahkan!',
+        detail: `${props.item.name} ditambahkan ke keranjang`,
+        life: 2000,
+      })
+    } else {
+      toast.add({
+        severity: 'warn',
+        summary: 'Tidak Tersedia',
+        detail: result.message || 'Stok tidak mencukupi',
+        life: 3000,
+      })
+    }
+  } catch {
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Terjadi kesalahan, coba lagi',
+      life: 3000,
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function handleIncrease() {
-  cartStore.increaseQty(props.item.id)
+async function handleIncrease() {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    const result = await cartStore.checkAndIncrease(props.item)
+    if (!result.success) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Tidak Tersedia',
+        detail: result.message || 'Stok tidak mencukupi',
+        life: 3000,
+      })
+    }
+  } catch {
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Terjadi kesalahan, coba lagi',
+      life: 3000,
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 
-function handleDecrease() {
-  cartStore.decreaseQty(props.item.id)
+async function handleDecrease() {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    await cartStore.checkAndDecrease(props.item)
+  } catch {
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Terjadi kesalahan, coba lagi',
+      life: 3000,
+    })
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -79,16 +130,24 @@ function handleDecrease() {
         <div v-if="inCart" class="flex items-center gap-1.5">
           <button
             @click="handleDecrease"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary hover:bg-accent hover:text-white text-text transition-colors duration-200 shrink-0"
+            :disabled="isLoading"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary hover:bg-accent hover:text-white text-text transition-colors duration-200 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <i :class="quantity === 1 ? 'pi pi-trash' : 'pi pi-minus'" class="text-xs"></i>
+            <i
+              v-if="!isLoading"
+              :class="quantity === 1 ? 'pi pi-trash' : 'pi pi-minus'"
+              class="text-xs"
+            ></i>
+            <i v-else class="pi pi-spinner pi-spin text-xs"></i>
           </button>
           <span class="text-sm font-bold text-text w-6 text-center shrink-0">{{ quantity }}</span>
           <button
             @click="handleIncrease"
-            class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary hover:bg-primary-dark text-white transition-colors duration-200 shrink-0"
+            :disabled="isLoading"
+            class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary hover:bg-primary-dark text-white transition-colors duration-200 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <i class="pi pi-plus text-xs"></i>
+            <i v-if="!isLoading" class="pi pi-plus text-xs"></i>
+            <i v-else class="pi pi-spinner pi-spin text-xs"></i>
           </button>
         </div>
 
@@ -96,12 +155,12 @@ function handleDecrease() {
         <button
           v-else
           @click="handleAdd"
-          :disabled="item.status !== 'available'"
+          :disabled="item.status !== 'available' || isLoading"
           class="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-xl transition-all duration-200 active:scale-95"
-          :class="{ 'animate-pulse-once bg-success!': isAdding }"
         >
-          <i class="pi pi-plus text-xs"></i>
-          Tambah
+          <i v-if="!isLoading" class="pi pi-plus text-xs"></i>
+          <i v-else class="pi pi-spinner pi-spin text-xs"></i>
+          {{ isLoading ? 'Checking...' : 'Tambah' }}
         </button>
       </div>
     </div>

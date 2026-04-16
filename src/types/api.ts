@@ -60,3 +60,14 @@ export interface MenuCategory {
   menus: Menu[]
   children: MenuCategory[]
 }
+
+export interface CheckMaterialBulkRequest {
+  menu_id: number
+  quantity: number
+}
+
+export interface CheckMaterialBulkResponse {
+  success: boolean
+  message: string
+  data: null
+}

@@ -1,10 +1,42 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { useToast } from 'primevue/usetoast'
 import CartItemCard from '@/components/CartItemCard.vue'
 
 const route = useRoute()
+const router = useRouter()
 const cartStore = useCartStore()
+const toast = useToast()
+const isChecking = ref(false)
+
+async function handleCheckout() {
+  if (isChecking.value) return
+  isChecking.value = true
+  try {
+    const result = await cartStore.checkBulk()
+    if (!result.success) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Stok Berubah',
+        detail: result.message || 'Beberapa item mungkin tidak tersedia',
+        life: 4000,
+      })
+      return
+    }
+    router.push({ path: '/checkout', query: route.query })
+  } catch {
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Gagal memeriksa ketersediaan item',
+      life: 3000,
+    })
+  } finally {
+    isChecking.value = false
+  }
+}
 </script>
 
 <template>
@@ -82,13 +114,17 @@ const cartStore = useCartStore()
             <i class="pi pi-plus text-xs"></i>
             Tambah Lagi
           </RouterLink>
-          <RouterLink
-            :to="{ path: '/checkout', query: route.query }"
-            class="flex-1 text-center bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-1.5"
+          <button
+            @click="handleCheckout"
+            :disabled="isChecking"
+            class="flex-1 text-center bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-1.5"
           >
-            Checkout
-            <i class="pi pi-arrow-right text-xs"></i>
-          </RouterLink>
+            <i v-if="isChecking" class="pi pi-spinner pi-spin text-xs"></i>
+            <template v-else>
+              Checkout
+              <i class="pi pi-arrow-right text-xs"></i>
+            </template>
+          </button>
         </div>
       </div>
     </div>

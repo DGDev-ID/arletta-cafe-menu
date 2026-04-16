@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useLocation } from '@/composables/useLocation'
@@ -13,6 +13,9 @@ const isOrdering = ref(false)
 const orderSuccess = ref(false)
 const orderNumber = ref('')
 const savedNote = ref('')
+const customerName = ref('')
+const savedCustomer = ref('')
+const isCustomerValid = computed(() => customerName.value.trim().length > 0)
 
 function generateOrderNumber() {
   const now = new Date()
@@ -28,6 +31,7 @@ async function handleOrder() {
 
   orderNumber.value = generateOrderNumber()
   savedNote.value = cartStore.orderNote.trim()
+  savedCustomer.value = customerName.value.trim()
   orderSuccess.value = true
   isOrdering.value = false
   cartStore.clearCart()
@@ -83,6 +87,11 @@ function backToMenu() {
           <p class="text-sm font-medium text-text leading-relaxed">{{ savedNote }}</p>
         </div>
 
+        <div v-if="savedCustomer" class="bg-secondary-light rounded-xl p-4 mb-6 text-left">
+          <p class="text-xs text-text-light mb-1">Nama Pelanggan</p>
+          <p class="text-sm font-medium text-text leading-relaxed">{{ savedCustomer }}</p>
+        </div>
+
         <p class="text-xs text-text-light mb-6">{{ deliveryMessage }}</p>
 
         <button
@@ -126,6 +135,21 @@ function backToMenu() {
               <i class="pi pi-map-marker text-[10px]"></i> {{ cafeName }}
             </p>
           </div>
+        </div>
+
+        <!-- Customer Name -->
+        <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4">
+          <h3 class="text-sm font-semibold text-text mb-2 flex items-center gap-2">
+            <i class="pi pi-user text-primary"></i> Nama Pelanggan
+          </h3>
+          <input
+            v-model="customerName"
+            type="text"
+            placeholder="Masukkan nama pelanggan"
+            class="w-full bg-secondary-light rounded-xl px-4 py-2 text-sm text-text placeholder:text-text-light"
+            aria-required="true"
+          />
+          <p v-if="!isCustomerValid" class="text-xs text-primary mt-2">Isi dulu nama pelanggan sebelum memesan ya</p>
         </div>
 
         <!-- Order Summary -->
@@ -208,7 +232,7 @@ function backToMenu() {
       <div class="max-w-3xl mx-auto">
         <button
           @click="handleOrder"
-          :disabled="isOrdering"
+          :disabled="isOrdering || !isCustomerValid"
           class="w-full bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-base"
         >
           <template v-if="isOrdering">

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import type { Menu } from '@/types/api'
+import { checkAvailableMaterial, checkAvailableMaterialBulk } from '@/services/api'
 
 export interface CartItem {
   id: number
@@ -70,7 +71,7 @@ export const useCartStore = defineStore('cart', () => {
 
   const isEmpty = computed(() => items.value.length === 0)
 
-  // Actions
+  // Actions (raw — tanpa API check)
   function addToCart(menuItem: Menu) {
     const existing = items.value.find((item) => item.id === menuItem.id)
     if (existing) {
@@ -111,11 +112,73 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
+  // Actions dengan API check
+  async function checkAndAdd(menuItem: Menu): Promise<{ success: boolean; message: string }> {
+    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
+    const nextQty = currentQty + 1
+
+    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: nextQty })
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    addToCart(menuItem)
+    return { success: true, message: result.message }
+  }
+
+  async function checkAndIncrease(menuItem: Menu): Promise<{ success: boolean; message: string }> {
+    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
+    const nextQty = currentQty + 1
+
+    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: nextQty })
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    increaseQty(menuItem.id)
+    return { success: true, message: result.message }
+  }
+
+  async function checkAndDecrease(menuItem: Menu): Promise<{ success: boolean; message: string }> {
+    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
+    const nextQty = currentQty - 1
+
+    if (nextQty <= 0) {
+      removeFromCart(menuItem.id)
+      return { success: true, message: '' }
+    }
+
+    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: nextQty })
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    decreaseQty(menuItem.id)
+    return { success: true, message: result.message }
+  }
+
   function clearCart() {
     items.value = []
     orderNote.value = ''
     localStorage.removeItem(CART_STORAGE_KEY)
     localStorage.removeItem(NOTE_STORAGE_KEY)
+  }
+
+  async function checkBulk(): Promise<{ success: boolean; message: string }> {
+    if (items.value.length === 0) return { success: true, message: '' }
+
+    const payload = {
+      items: items.value.map((item) => ({
+        menu_id: item.id,
+        quantity: item.quantity,
+      })),
+    }
+
+    const result = await checkAvailableMaterialBulk(payload)
+    return { success: result.success, message: result.message }
   }
 
   return {
@@ -128,6 +191,10 @@ export const useCartStore = defineStore('cart', () => {
     removeFromCart,
     increaseQty,
     decreaseQty,
+    checkAndAdd,
+    checkAndIncrease,
+    checkAndDecrease,
+    checkBulk,
     clearCart,
   }
 })
