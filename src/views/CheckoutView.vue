@@ -41,15 +41,16 @@ async function handlePaymentSelect(type: 'manual' | 'qris') {
   isOrdering.value = true
   try {
     const payload = {
-      cafe_id: cafeStore.cafe!.id,
-      table_id: cafeStore.table!.id,
-      payment_type: type,
-      details: cartStore.items.map((item) => ({
-        menu_id: item.id,
-        amount: item.quantity,
-        description: item.description ?? null,
-      })),
-    }
+  cafe_id: cafeStore.cafe!.unique_id,  // unique_id bukan id
+  table_id: cafeStore.table!.id,
+  payment_type: type,
+  cust_name: customerName.value.trim(),
+  details: cartStore.items.map((item) => ({
+    menu_id: item.id,
+    amount: item.quantity,  // quantity -> amount
+    description: null,
+  })),
+}
 
     const res = await makeTransaction(payload)
 

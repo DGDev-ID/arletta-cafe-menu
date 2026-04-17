@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import QRCode from 'qrcode'
 import { getTransactionStatus } from '@/services/api'
 import type { TransactionResponse } from '@/types/api'
 
@@ -15,6 +16,7 @@ type PaymentStatus = 'pending' | 'in_order' | 'success' | 'failed'
 
 const status = ref<PaymentStatus>('pending')
 const isPolling = ref(true)
+const qrDataUrl = ref<string>('')
 let intervalId: ReturnType<typeof setInterval> | null = null
 
 const statusConfig = computed(() => {
@@ -47,6 +49,22 @@ const statusConfig = computed(() => {
   return map[status.value]
 })
 
+async function generateQR() {
+  if (!props.transaction.qr_code) return
+  try {
+    qrDataUrl.value = await QRCode.toDataURL(props.transaction.qr_code, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#5a3d2b',
+        light: '#faf7f4',
+      },
+    })
+  } catch {
+    // fallback ke teks saja
+  }
+}
+
 async function pollStatus() {
   try {
     const res = await getTransactionStatus(props.transaction.transaction_id)
@@ -71,6 +89,7 @@ function stopPolling() {
 }
 
 onMounted(() => {
+  generateQR()
   pollStatus()
   intervalId = setInterval(pollStatus, 3000)
 })
@@ -88,26 +107,46 @@ onUnmounted(() => {
       <div>
         <p :class="[statusConfig.color, 'font-semibold text-sm']">{{ statusConfig.label }}</p>
         <p class="text-xs text-text-light mt-0.5">
-          {{ status === 'pending' ? 'Tunjukkan kode unik ke kasir' : 'Mohon tunggu sebentar' }}
+          {{ status === 'pending' ? 'Tunjukkan QR code ke kasir' : 'Mohon tunggu sebentar' }}
         </p>
       </div>
-      <div v-if="isPolling" class="ml-auto">
+      <div v-if="isPolling" class="ml-auto shrink-0">
         <div class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
       </div>
     </div>
 
-    <!-- Kode Unik -->
-    <div class="bg-secondary-light rounded-xl p-4 text-center mb-4">
-      <p class="text-xs text-text-light mb-1">Kode Unik Pembayaran</p>
-      <p class="text-3xl font-bold text-primary tracking-widest">{{ transaction.qr_code }}</p>
-      <p class="text-xs text-text-light mt-2">Tunjukkan kode ini ke kasir untuk konfirmasi</p>
+    <!-- QR Code -->
+    <div class="bg-secondary-light rounded-xl p-4 text-center mb-5">
+      <p class="text-xs text-text-light mb-3">Kode Unik Pembayaran</p>
+      <div class="flex justify-center mb-3">
+        <img
+          v-if="qrDataUrl"
+          :src="qrDataUrl"
+          alt="QR Code Pembayaran"
+          class="w-44 h-44 rounded-xl"
+        />
+        <div
+          v-else
+          class="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center"
+        >
+          <i class="pi pi-spin pi-spinner text-primary text-2xl"></i>
+        </div>
+      </div>
+      <p class="text-xs font-mono font-bold text-primary tracking-wider break-all">
+        {{ transaction.qr_code }}
+      </p>
+      <p class="text-xs text-text-light mt-2">Silahkan datang ke kasir untuk melakukan pembayaran</p>
     </div>
 
     <!-- Detail Transaksi -->
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2 mb-4">
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Cafe</span>
         <span class="font-medium text-text">{{ transaction.cafe_name }}</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-text-light">Nama Pelanggan</span>
+        <span class="font-medium text-text">{{ transaction.cust_name || '-' }}</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Meja</span>
@@ -123,12 +162,14 @@ onUnmounted(() => {
       </div>
       <div class="flex justify-between text-sm pt-2 border-t border-secondary">
         <span class="font-bold text-text">Total</span>
-        <span class="font-bold text-primary text-base">Rp {{ transaction.total_price.toLocaleString('id-ID') }}</span>
+        <span class="font-bold text-primary text-base">
+          Rp {{ transaction.total_price.toLocaleString('id-ID') }}
+        </span>
       </div>
     </div>
 
-    <!-- Items -->
-    <div class="mt-4 pt-4 border-t border-secondary">
+    <!-- Detail Pesanan -->
+    <div class="pt-4 border-t border-secondary">
       <p class="text-xs font-semibold text-text-light mb-2">Detail Pesanan</p>
       <div class="flex flex-col gap-1.5">
         <div

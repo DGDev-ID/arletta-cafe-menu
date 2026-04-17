@@ -16,7 +16,7 @@ export interface CafeTableData {
 }
 
 export interface Cafe {
-  id: number
+  id: string
   unique_id: string
   name: string
   address: string
@@ -28,7 +28,7 @@ export interface Cafe {
 
 export interface CafeTable {
   id: number
-  cafe_id: number
+  cafe_id: string
   name: string
   status: string
   description: string
@@ -38,7 +38,7 @@ export interface CafeTable {
 
 export interface Menu {
   id: number
-  cafe_id: number
+  cafe_id: string
   menu_category_id: number
   name: string
   description: string
@@ -51,7 +51,7 @@ export interface Menu {
 
 export interface MenuCategory {
   id: number
-  cafe_id: number
+  cafe_id: string
   name: string
   parent_id: number | null
   description: string
@@ -73,9 +73,10 @@ export interface CheckMaterialBulkResponse {
 }
 
 export interface MakeTransactionRequest {
-  cafe_id: number
+  cafe_id: string
   table_id: number
   payment_type: 'manual' | 'qris'
+  cust_name?: string
   details: {
     menu_id: number
     amount: number
@@ -94,6 +95,7 @@ export interface TransactionResponse {
   transaction_id: number
   cafe_name: string
   table_name: string
+  cust_name?: string
   price: number
   fee: number
   total_price: number
