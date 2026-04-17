@@ -12,15 +12,14 @@ const emit = defineEmits<{
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="visible"
-      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-    >
+    <div v-if="visible" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="emit('close')"></div>
 
       <!-- Modal -->
-      <div class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 z-10">
+      <div
+        class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 z-10"
+      >
         <h3 class="text-lg font-bold text-text mb-1">Pilih Metode Pembayaran</h3>
         <p class="text-xs text-text-light mb-6">Pilih cara pembayaran yang kamu inginkan</p>
 
@@ -31,7 +30,9 @@ const emit = defineEmits<{
             :disabled="isLoading"
             class="flex items-center gap-4 p-4 rounded-xl border-2 border-secondary hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left"
           >
-            <div class="w-11 h-11 rounded-xl bg-secondary-light flex items-center justify-center shrink-0">
+            <div
+              class="w-11 h-11 rounded-xl bg-secondary-light flex items-center justify-center shrink-0"
+            >
               <i class="pi pi-wallet text-xl text-primary"></i>
             </div>
             <div>
@@ -48,7 +49,9 @@ const emit = defineEmits<{
             :disabled="isLoading"
             class="flex items-center gap-4 p-4 rounded-xl border-2 border-secondary hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left"
           >
-            <div class="w-11 h-11 rounded-xl bg-secondary-light flex items-center justify-center shrink-0">
+            <div
+              class="w-11 h-11 rounded-xl bg-secondary-light flex items-center justify-center shrink-0"
+            >
               <i class="pi pi-qrcode text-xl text-primary"></i>
             </div>
             <div>

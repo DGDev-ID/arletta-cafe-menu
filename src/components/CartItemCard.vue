@@ -57,7 +57,10 @@ async function handleDecrease(itemId: number) {
   >
     <!-- Image -->
     <img
-      :src="item.image || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop'"
+      :src="
+        item.image ||
+        'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop'
+      "
       :alt="item.name"
       class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shrink-0"
     />

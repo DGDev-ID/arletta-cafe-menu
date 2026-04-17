@@ -37,20 +37,22 @@ function handleOrder() {
   showPaymentModal.value = true
 }
 
-async function handlePaymentSelect(type: 'manual' | 'qris') {
+async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
+  // normalize older/alternate 'qr' value to 'qris'
+  const normalizedType = type === 'qr' ? 'qris' : type
   isOrdering.value = true
   try {
     const payload = {
-  cafe_id: cafeStore.cafe!.unique_id,  // unique_id bukan id
-  table_id: cafeStore.table!.id,
-  payment_type: type,
-  cust_name: customerName.value.trim(),
-  details: cartStore.items.map((item) => ({
-    menu_id: item.id,
-    amount: item.quantity,  // quantity -> amount
-    description: null,
-  })),
-}
+      cafe_id: cafeStore.cafe!.unique_id, // unique_id (string like CAFE-001)
+      table_id: cafeStore.table!.id,
+      payment_type: normalizedType,
+      cust_name: customerName.value.trim(),
+      details: cartStore.items.map((item) => ({
+        menu_id: item.id,
+        amount: item.quantity,
+        description: item.description ?? null,
+      })),
+    }
 
     const res = await makeTransaction(payload)
 
@@ -62,7 +64,7 @@ async function handlePaymentSelect(type: 'manual' | 'qris') {
     transactionData.value = res.data
     showPaymentModal.value = false
 
-    if (type === 'qris') {
+    if (normalizedType === 'qris') {
       // Load Midtrans snap
       const snapToken = res.data.snap_token!
       loadMidtransSnap(snapToken)
@@ -83,7 +85,7 @@ function loadMidtransSnap(snapToken: string) {
   script.src = 'https://app.midtrans.com/snap/snap.js'
   script.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY as string)
   script.onload = () => {
-  // @ts-expect-error window.snap is not defined on the Window type
+    // @ts-expect-error window.snap is not defined on the Window type
     window.snap.pay(snapToken, {
       onSuccess: () => {
         savedCustomer.value = customerName.value.trim()
@@ -173,10 +175,7 @@ function backToMenu() {
 
     <!-- Manual Payment Status -->
     <div v-else-if="showManualPayment && transactionData" class="max-w-3xl mx-auto px-4 py-6">
-      <ManualPaymentStatus
-        :transaction="transactionData"
-        @success="handleManualSuccess"
-      />
+      <ManualPaymentStatus :transaction="transactionData" @success="handleManualSuccess" />
     </div>
 
     <!-- Checkout Content -->
@@ -196,7 +195,9 @@ function backToMenu() {
 
       <template v-else>
         <!-- Table Info -->
-        <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4 flex items-center gap-3">
+        <div
+          class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4 flex items-center gap-3"
+        >
           <div class="w-10 h-10 bg-secondary-light rounded-xl flex items-center justify-center">
             <i :class="locationIcon" class="text-primary text-lg"></i>
           </div>
@@ -238,7 +239,10 @@ function backToMenu() {
             >
               <div class="flex items-center gap-3 flex-1 min-w-0">
                 <img
-                  :src="item.image || 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop'"
+                  :src="
+                    item.image ||
+                    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop'
+                  "
                   :alt="item.name"
                   class="w-10 h-10 rounded-lg object-cover shrink-0"
                 />
@@ -247,7 +251,9 @@ function backToMenu() {
                   <p class="text-xs text-text-light">
                     {{ item.quantity }}x @ Rp {{ item.price.toLocaleString('id-ID') }}
                   </p>
-                  <p v-if="item.description" class="text-xs text-text-light mt-1">{{ item.description }}</p>
+                  <p v-if="item.description" class="text-xs text-text-light mt-1">
+                    {{ item.description }}
+                  </p>
                 </div>
               </div>
               <span class="text-sm font-semibold text-accent ml-2 shrink-0">
@@ -263,7 +269,9 @@ function backToMenu() {
         <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4">
           <div class="flex justify-between items-center py-2">
             <span class="text-sm text-text-light">Subtotal</span>
-            <span class="text-sm font-medium text-text">Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span>
+            <span class="text-sm font-medium text-text"
+              >Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span
+            >
           </div>
           <div class="flex justify-between items-center py-2 border-t border-secondary">
             <span class="text-sm text-text-light">Pajak & Layanan</span>
@@ -271,7 +279,9 @@ function backToMenu() {
           </div>
           <div class="flex justify-between items-center pt-3 mt-2 border-t-2 border-primary/20">
             <span class="text-base font-bold text-text">Total</span>
-            <span class="text-xl font-bold text-primary">Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span>
+            <span class="text-xl font-bold text-primary"
+              >Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span
+            >
           </div>
         </div>
       </template>

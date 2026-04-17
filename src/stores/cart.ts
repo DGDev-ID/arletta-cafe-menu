@@ -18,9 +18,12 @@ function loadCartFromStorage(): CartItem[] {
   try {
     const data = localStorage.getItem(CART_STORAGE_KEY)
     if (data) {
-  const parsed = JSON.parse(data) as CartItem[]
-  // ensure backwards compatibility: older items may not have description
-  return parsed.map((it) => ({ ...it, description: (it as Partial<CartItem>).description ?? null }))
+      const parsed = JSON.parse(data) as CartItem[]
+      // ensure backwards compatibility: older items may not have description
+      return parsed.map((it) => ({
+        ...it,
+        description: (it as Partial<CartItem>).description ?? null,
+      }))
     }
   } catch {
     // ignore parse errors
@@ -176,45 +179,49 @@ export const useCartStore = defineStore('cart', () => {
     return { success: result.success, message: result.message }
   }
 
-  async function checkAndIncreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
-  const cartItem = items.value.find((i) => i.id === itemId)
-  if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
+  async function checkAndIncreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
+    const cartItem = items.value.find((i) => i.id === itemId)
+    if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
 
-  const nextQty = cartItem.quantity + 1
-  const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
+    const nextQty = cartItem.quantity + 1
+    const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
 
-  if (!result.success) {
-    return { success: false, message: result.message }
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    increaseQty(itemId)
+    return { success: true, message: result.message }
   }
 
-  increaseQty(itemId)
-  return { success: true, message: result.message }
-}
+  async function checkAndDecreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
+    const cartItem = items.value.find((i) => i.id === itemId)
+    if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
 
-async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
-  const cartItem = items.value.find((i) => i.id === itemId)
-  if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
+    const nextQty = cartItem.quantity - 1
 
-  const nextQty = cartItem.quantity - 1
+    if (nextQty <= 0) {
+      removeFromCart(itemId)
+      return { success: true, message: '' }
+    }
 
-  if (nextQty <= 0) {
-    removeFromCart(itemId)
-    return { success: true, message: '' }
+    const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
+
+    if (!result.success) {
+      return { success: false, message: result.message }
+    }
+
+    decreaseQty(itemId)
+    return { success: true, message: result.message }
   }
-
-  const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
-
-  if (!result.success) {
-    return { success: false, message: result.message }
-  }
-
-  decreaseQty(itemId)
-  return { success: true, message: result.message }
-}
 
   return {
     items,
-  // global orderNote removed
+    // global orderNote removed
     totalPrice,
     totalItems,
     isEmpty,
@@ -228,7 +235,7 @@ async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean;
     checkBulk,
     clearCart,
     checkAndIncreaseById,
-  checkAndDecreaseById,
-  setItemDescription,
+    checkAndDecreaseById,
+    setItemDescription,
   }
 })

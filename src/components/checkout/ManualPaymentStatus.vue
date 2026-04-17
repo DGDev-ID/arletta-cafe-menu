@@ -125,17 +125,16 @@ onUnmounted(() => {
           alt="QR Code Pembayaran"
           class="w-44 h-44 rounded-xl"
         />
-        <div
-          v-else
-          class="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center"
-        >
+        <div v-else class="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
           <i class="pi pi-spin pi-spinner text-primary text-2xl"></i>
         </div>
       </div>
       <p class="text-xs font-mono font-bold text-primary tracking-wider break-all">
         {{ transaction.qr_code }}
       </p>
-      <p class="text-xs text-text-light mt-2">Silahkan datang ke kasir untuk melakukan pembayaran</p>
+      <p class="text-xs text-text-light mt-2">
+        Silahkan datang ke kasir untuk melakukan pembayaran
+      </p>
     </div>
 
     <!-- Detail Transaksi -->
@@ -154,7 +153,9 @@ onUnmounted(() => {
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Subtotal</span>
-        <span class="font-medium text-text">Rp {{ transaction.price.toLocaleString('id-ID') }}</span>
+        <span class="font-medium text-text"
+          >Rp {{ transaction.price.toLocaleString('id-ID') }}</span
+        >
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Biaya Layanan</span>
