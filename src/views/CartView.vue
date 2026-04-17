@@ -78,19 +78,7 @@ async function handleCheckout() {
       <div v-else class="flex flex-col gap-3">
         <CartItemCard v-for="item in cartStore.items" :key="item.id" :item="item" />
 
-        <!-- Order Note -->
-        <div class="bg-white rounded-xl shadow-sm border border-secondary p-4 mt-2">
-          <label class="flex items-center gap-2 text-sm font-semibold text-text mb-2">
-            <i class="pi pi-pencil text-primary text-xs"></i>
-            Catatan Pesanan
-          </label>
-          <textarea
-            v-model="cartStore.orderNote"
-            placeholder="Contoh: tidak pakai es, extra gula, alergi kacang..."
-            rows="3"
-            class="w-full text-sm text-text bg-secondary-light rounded-xl px-4 py-3 border border-secondary focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none resize-none transition-colors duration-200 placeholder:text-text-light/60"
-          ></textarea>
-        </div>
+        <!-- Per-item notes are editable on each Cart item. Global order note removed. -->
       </div>
     </div>
 

@@ -9,16 +9,18 @@ export interface CartItem {
   price: number
   image: string | null
   quantity: number
+  description?: string | null
 }
 
 const CART_STORAGE_KEY = 'arletta-cafe-cart'
-const NOTE_STORAGE_KEY = 'arletta-cafe-note'
 
 function loadCartFromStorage(): CartItem[] {
   try {
     const data = localStorage.getItem(CART_STORAGE_KEY)
     if (data) {
-      return JSON.parse(data) as CartItem[]
+  const parsed = JSON.parse(data) as CartItem[]
+  // ensure backwards compatibility: older items may not have description
+  return parsed.map((it) => ({ ...it, description: (it as Partial<CartItem>).description ?? null }))
     }
   } catch {
     // ignore parse errors
@@ -30,22 +32,11 @@ function saveCartToStorage(items: CartItem[]) {
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
 }
 
-function loadNoteFromStorage(): string {
-  return localStorage.getItem(NOTE_STORAGE_KEY) ?? ''
-}
-
-function saveNoteToStorage(note: string) {
-  if (note) {
-    localStorage.setItem(NOTE_STORAGE_KEY, note)
-  } else {
-    localStorage.removeItem(NOTE_STORAGE_KEY)
-  }
-}
+// global orderNote storage removed; use per-item descriptions instead
 
 export const useCartStore = defineStore('cart', () => {
   // State
   const items = ref<CartItem[]>(loadCartFromStorage())
-  const orderNote = ref<string>(loadNoteFromStorage())
 
   // Watch for changes and persist to localStorage
   watch(
@@ -56,9 +47,7 @@ export const useCartStore = defineStore('cart', () => {
     { deep: true },
   )
 
-  watch(orderNote, (newNote) => {
-    saveNoteToStorage(newNote)
-  })
+  // no global order note to watch
 
   // Getters
   const totalPrice = computed(() => {
@@ -83,6 +72,7 @@ export const useCartStore = defineStore('cart', () => {
         price: parseFloat(menuItem.price),
         image: menuItem.img_url,
         quantity: 1,
+        description: null,
       })
     }
   }
@@ -109,6 +99,13 @@ export const useCartStore = defineStore('cart', () => {
       } else {
         removeFromCart(itemId)
       }
+    }
+  }
+
+  function setItemDescription(itemId: number, desc: string | null) {
+    const item = items.value.find((i) => i.id === itemId)
+    if (item) {
+      item.description = desc
     }
   }
 
@@ -162,9 +159,7 @@ export const useCartStore = defineStore('cart', () => {
 
   function clearCart() {
     items.value = []
-    orderNote.value = ''
     localStorage.removeItem(CART_STORAGE_KEY)
-    localStorage.removeItem(NOTE_STORAGE_KEY)
   }
 
   async function checkBulk(): Promise<{ success: boolean; message: string }> {
@@ -181,9 +176,45 @@ export const useCartStore = defineStore('cart', () => {
     return { success: result.success, message: result.message }
   }
 
+  async function checkAndIncreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  const cartItem = items.value.find((i) => i.id === itemId)
+  if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
+
+  const nextQty = cartItem.quantity + 1
+  const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
+
+  if (!result.success) {
+    return { success: false, message: result.message }
+  }
+
+  increaseQty(itemId)
+  return { success: true, message: result.message }
+}
+
+async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  const cartItem = items.value.find((i) => i.id === itemId)
+  if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
+
+  const nextQty = cartItem.quantity - 1
+
+  if (nextQty <= 0) {
+    removeFromCart(itemId)
+    return { success: true, message: '' }
+  }
+
+  const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
+
+  if (!result.success) {
+    return { success: false, message: result.message }
+  }
+
+  decreaseQty(itemId)
+  return { success: true, message: result.message }
+}
+
   return {
     items,
-    orderNote,
+  // global orderNote removed
     totalPrice,
     totalItems,
     isEmpty,
@@ -196,5 +227,8 @@ export const useCartStore = defineStore('cart', () => {
     checkAndDecrease,
     checkBulk,
     clearCart,
+    checkAndIncreaseById,
+  checkAndDecreaseById,
+  setItemDescription,
   }
 })

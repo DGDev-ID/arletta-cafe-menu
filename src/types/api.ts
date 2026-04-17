@@ -71,3 +71,40 @@ export interface CheckMaterialBulkResponse {
   message: string
   data: null
 }
+
+export interface MakeTransactionRequest {
+  cafe_id: number
+  table_id: number
+  payment_type: 'manual' | 'qris'
+  details: {
+    menu_id: number
+    amount: number
+    description: string | null
+  }[]
+}
+
+export interface TransactionDetail {
+  menu_name: string
+  amount: number
+  price: number
+  description: string | null
+}
+
+export interface TransactionResponse {
+  transaction_id: number
+  cafe_name: string
+  table_name: string
+  price: number
+  fee: number
+  total_price: number
+  payment_type: 'manual' | 'qris'
+  details: TransactionDetail[]
+  snap_token?: string
+  qr_code?: string
+}
+
+export interface TransactionStatusResponse {
+  success: boolean
+  message: string
+  data: 'success' | 'pending' | 'failed' | 'in_order'
+}

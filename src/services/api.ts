@@ -1,3 +1,9 @@
+import type {
+  MakeTransactionRequest,
+  TransactionResponse,
+  TransactionStatusResponse,
+} from '@/types/api'
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
 export class ApiError extends Error {
@@ -89,4 +95,41 @@ export async function checkAvailableMaterialBulk(
 
   const json = await res.json()
   return json as CheckMaterialBulkResponse
+}
+
+export interface MakeTransactionApiResponse {
+  success: boolean
+  message: string
+  data: TransactionResponse
+}
+
+export async function makeTransaction(
+  payload: MakeTransactionRequest,
+): Promise<MakeTransactionApiResponse> {
+  const url = new URL(`${BASE_URL}/make-transaction`)
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    throw new ApiError(res.status, `API error: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+export async function getTransactionStatus(
+  transactionId: number,
+): Promise<TransactionStatusResponse> {
+  const url = new URL(`${BASE_URL}/transaction/${transactionId}/status`)
+  const res = await fetch(url.toString())
+
+  if (!res.ok) {
+    throw new ApiError(res.status, `API error: ${res.status}`)
+  }
+
+  return res.json()
 }
