@@ -34,8 +34,8 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   >
     <div class="mx-auto flex max-w-7xl items-center justify-between px-6">
       <!-- Logo -->
-      <a href="#home" class="flex items-center gap-2" @click.prevent="scrollTo('#home')">
-        <i class="pi pi-star-fill text-gold text-xl"></i>
+      <a href="#home" class="flex items-center gap-3" @click.prevent="scrollTo('#home')">
+        <img src="/logo-cafe.png" alt="Arletta Cafe" class="w-10 h-10 rounded-lg object-cover" />
         <span class="font-heading text-2xl font-bold tracking-wide text-white">
           Arletta<span class="text-gold">.</span>
         </span>

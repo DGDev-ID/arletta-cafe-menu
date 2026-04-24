@@ -120,31 +120,26 @@ function clearSearch() {
       </div>
     </div>
 
-    <!-- Category Filter — full width, equal distribution, NO "Semua" -->
-    <div class="max-w-5xl mx-auto px-4 -mt-5 relative z-10">
-      <div class="bg-white rounded-2xl shadow-md p-2">
-        <div
-          class="grid gap-2"
-          :style="{
-            gridTemplateColumns: `repeat(${cafeStore.topCategories.length}, minmax(0, 1fr))`,
-          }"
-        >
-          <button
-            v-for="cat in cafeStore.topCategories"
-            :key="cat.id"
-            @click="selectCategory(cat.id)"
-            class="flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200"
-            :class="
-              activeCategory === cat.id
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-secondary-light text-text-light hover:bg-secondary'
-            "
-          >
-            <span>{{ cat.name }}</span>
-          </button>
-        </div>
-      </div>
+    <!-- Category Filter — horizontal scroll -->
+<div class="max-w-5xl mx-auto px-4 -mt-5 relative z-10">
+  <div class="bg-white rounded-2xl shadow-md p-2">
+    <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+      <button
+        v-for="cat in cafeStore.topCategories"
+        :key="cat.id"
+        @click="selectCategory(cat.id)"
+        class="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 shrink-0"
+        :class="
+          activeCategory === cat.id
+            ? 'bg-primary text-white shadow-md'
+            : 'bg-secondary-light text-text-light hover:bg-secondary'
+        "
+      >
+        <span>{{ cat.name }}</span>
+      </button>
     </div>
+  </div>
+</div>
 
     <!-- Search Bar -->
     <div class="max-w-5xl mx-auto px-4 mt-3 relative z-10">

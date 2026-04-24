@@ -200,3 +200,12 @@
 .landing-page section {
   overflow: hidden;
 }
+
+/* hide scrollbar tapi tetap bisa scroll */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
