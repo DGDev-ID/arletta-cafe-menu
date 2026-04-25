@@ -49,6 +49,14 @@ const statusConfig = computed(() => {
   return map[status.value]
 })
 
+function formatRupiah(value: number) {
+  try {
+    return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(value)
+  } catch {
+    return String(value)
+  }
+}
+
 async function generateQR() {
   if (!props.transaction.qr_code) return
   try {
@@ -118,7 +126,7 @@ onUnmounted(() => {
     <!-- QR Code -->
     <div class="bg-secondary-light rounded-xl p-4 text-center mb-5">
       <p class="text-xs text-text-light mb-3">Kode Unik Pembayaran</p>
-      <div class="flex justify-center mb-3">
+      <!-- <div class="flex justify-center mb-3">
         <img
           v-if="qrDataUrl"
           :src="qrDataUrl"
@@ -128,7 +136,7 @@ onUnmounted(() => {
         <div v-else class="w-44 h-44 rounded-xl bg-secondary flex items-center justify-center">
           <i class="pi pi-spin pi-spinner text-primary text-2xl"></i>
         </div>
-      </div>
+      </div> -->
       <p class="text-xs font-mono font-bold text-primary tracking-wider break-all">
         {{ transaction.qr_code }}
       </p>
@@ -151,21 +159,17 @@ onUnmounted(() => {
         <span class="text-text-light">Meja</span>
         <span class="font-medium text-text">{{ transaction.table_name }}</span>
       </div>
-      <div class="flex justify-between text-sm">
-        <span class="text-text-light">Subtotal</span>
-        <span class="font-medium text-text"
-          >Rp {{ transaction.price.toLocaleString('id-ID') }}</span
-        >
-      </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-text-light">Subtotal</span>
+          <span class="font-medium text-text">Rp {{ formatRupiah(transaction.price) }}</span>
+        </div>
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Biaya Layanan</span>
-        <span class="font-medium text-text">Rp {{ transaction.fee.toLocaleString('id-ID') }}</span>
+        <span class="font-medium text-text">Rp {{ formatRupiah(transaction.fee) }}</span>
       </div>
       <div class="flex justify-between text-sm pt-2 border-t border-secondary">
         <span class="font-bold text-text">Total</span>
-        <span class="font-bold text-primary text-base">
-          Rp {{ transaction.total_price.toLocaleString('id-ID') }}
-        </span>
+        <span class="font-bold text-primary text-base">Rp {{ formatRupiah(transaction.total_price) }}</span>
       </div>
     </div>
 
@@ -179,7 +183,7 @@ onUnmounted(() => {
           class="flex justify-between text-xs"
         >
           <span class="text-text">{{ detail.amount }}x {{ detail.menu_name }}</span>
-          <span class="text-text-light">Rp {{ detail.price.toLocaleString('id-ID') }}</span>
+          <span class="text-text-light">Rp {{ formatRupiah(detail.price) }}</span>
         </div>
       </div>
     </div>
