@@ -3,8 +3,18 @@ import { ref, computed } from 'vue'
 import { apiFetch } from '@/services/api'
 import type { ApiResponse, Cafe, CafeTable, MenuCategory, Menu } from '@/types/api'
 
+function normalizeCategories(cats: MenuCategory[]): MenuCategory[] {
+  return cats.map((cat) => ({
+    ...cat,
+    children: normalizeCategories(
+      Array.isArray(cat.children)
+        ? cat.children
+        : Object.values(cat.children ?? {}),
+    ),
+  }))
+}
+
 export const useCafeStore = defineStore('cafe', () => {
-  // State
   const cafe = ref<Cafe | null>(null)
   const table = ref<CafeTable | null>(null)
   const menuCategories = ref<MenuCategory[]>([])
@@ -12,14 +22,10 @@ export const useCafeStore = defineStore('cafe', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  // Getters
-
-  /** Top-level categories (parent_id === null) — used as filter tabs */
   const topCategories = computed(() => {
     return menuCategories.value.filter((c) => c.parent_id === null)
   })
 
-  /** All menus flattened for search */
   const allMenus = computed<Menu[]>(() => {
     const result: Menu[] = []
     function collect(cats: MenuCategory[]) {
@@ -38,8 +44,6 @@ export const useCafeStore = defineStore('cafe', () => {
     return result
   })
 
-  // Actions
-
   async function fetchCafeData(cafeId: string, tableId: string) {
     isLoading.value = true
     error.value = null
@@ -52,11 +56,11 @@ export const useCafeStore = defineStore('cafe', () => {
 
       cafe.value = res.data.cafe
       table.value = res.data.table
-      menuCategories.value = res.data.menu_categories
+      menuCategories.value = normalizeCategories(res.data.menu_categories) // ← ditambahkan
       isLoaded.value = true
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : 'Unknown error'
-      throw err // re-throw so router guard can catch
+      throw err
     } finally {
       isLoading.value = false
     }
