@@ -58,7 +58,7 @@ router.beforeEach(async (to) => {
   const cafeStore = useCafeStore()
 
   // Only fetch once (or re-fetch if params changed)
-  if (!cafeStore.isLoaded || cafeStore.cafe?.unique_id !== cafe_id) {
+  if (!cafeStore.isLoaded) {
     try {
       await cafeStore.fetchCafeData(cafe_id, table_id)
     } catch {

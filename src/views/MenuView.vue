@@ -32,7 +32,7 @@ const searchResults = computed(() => {
   if (!isSearching.value) return []
   const q = normalizedQuery.value
   return cafeStore.allMenus.filter(
-    (item) => item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q),
+    (item) => item.name.toLowerCase().includes(q) || (item.description ?? '').toLowerCase().includes(q),
   )
 })
 
