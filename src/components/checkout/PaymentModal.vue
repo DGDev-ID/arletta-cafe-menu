@@ -44,7 +44,7 @@ const emit = defineEmits<{
           </button>
 
           <!-- QRIS -->
-          <button
+          <!-- <button
             @click="emit('select', 'qr')"
             :disabled="isLoading"
             class="flex items-center gap-4 p-4 rounded-xl border-2 border-secondary hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left"
@@ -61,7 +61,7 @@ const emit = defineEmits<{
             <i v-if="isLoading" class="pi pi-spinner pi-spin text-primary ml-auto"></i>
             <i v-else class="pi pi-chevron-right text-text-light ml-auto text-xs"></i>
           </button>
-        </div>
+        </div> -->
 
         <button
           @click="emit('close')"
