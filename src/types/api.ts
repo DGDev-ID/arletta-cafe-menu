@@ -1,8 +1,3 @@
-// ============================================
-// Types matching the backend API response
-// GET /get-menu-cafe-table?cafe_id=XXX&table_id=XXX
-// ============================================
-
 export interface ApiResponse {
   success: boolean
   message: string
@@ -13,6 +8,7 @@ export interface CafeTableData {
   cafe: Cafe
   table: CafeTable
   menu_categories: MenuCategory[]
+  transaction?: ActiveTransaction | null
 }
 
 export interface Cafe {
@@ -32,8 +28,27 @@ export interface CafeTable {
   name: string
   status: string
   description: string
+  is_open_bill: number // 0 | 1
   created_at: string
   updated_at: string
+}
+
+export interface ActiveTransaction {
+  id: number
+  cust_name: string | null
+  status: string
+  is_open_bill: number
+  details: ActiveTransactionDetail[]
+}
+
+export interface ActiveTransactionDetail {
+  id: number
+  menu_id: number
+  menu_name: string
+  amount: number
+  price: number
+  description: string | null
+  status: string | null // 'pending' | 'success' | null
 }
 
 export interface Menu {
@@ -43,7 +58,7 @@ export interface Menu {
   name: string
   description: string
   img_url: string | null
-  price: string // "22000.00" from backend
+  price: string
   status: string
   created_at: string
   updated_at: string
@@ -109,4 +124,26 @@ export interface TransactionStatusResponse {
   success: boolean
   message: string
   data: 'success' | 'pending' | 'failed' | 'in_order'
+}
+
+export interface CreateOpenBillRequest {
+  cafe_table_id: number
+  cust_name: string
+}
+
+export interface CreateOpenBillResponse {
+  success: boolean
+  message: string
+  data: ActiveTransaction
+}
+
+export interface AddOrderOpenBillRequest {
+  cafe_table_id: number
+  orders: { menu_id: number; amount: number }[]
+}
+
+export interface AddOrderOpenBillResponse {
+  success: boolean
+  message: string
+  data: null
 }

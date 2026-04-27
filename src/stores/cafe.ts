@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiFetch } from '@/services/api'
-import type { ApiResponse, Cafe, CafeTable, MenuCategory, Menu } from '@/types/api'
+import type { ApiResponse, Cafe, CafeTable, MenuCategory, Menu, ActiveTransaction } from '@/types/api'
 
 function normalizeCategories(cats: MenuCategory[]): MenuCategory[] {
   return cats.map((cat) => ({
@@ -18,9 +18,18 @@ export const useCafeStore = defineStore('cafe', () => {
   const cafe = ref<Cafe | null>(null)
   const table = ref<CafeTable | null>(null)
   const menuCategories = ref<MenuCategory[]>([])
+  const activeTransaction = ref<ActiveTransaction | null>(null)
   const isLoaded = ref(false)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+
+  // Apakah meja ini mendukung open bill
+  const isOpenBillTable = computed(() => table.value?.is_open_bill === 1)
+
+  // Apakah sudah ada open bill aktif (ada transaction dengan details)
+  const hasActiveOpenBill = computed(
+    () => isOpenBillTable.value && activeTransaction.value !== null,
+  )
 
   const topCategories = computed(() => {
     return menuCategories.value.filter((c) => c.parent_id === null)
@@ -56,7 +65,9 @@ export const useCafeStore = defineStore('cafe', () => {
 
       cafe.value = res.data.cafe
       table.value = res.data.table
-      menuCategories.value = normalizeCategories(res.data.menu_categories) // ← ditambahkan
+      menuCategories.value = normalizeCategories(res.data.menu_categories)
+      // Simpan active transaction jika ada (open bill pending)
+      activeTransaction.value = res.data.transaction ?? null
       isLoaded.value = true
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : 'Unknown error'
@@ -66,15 +77,30 @@ export const useCafeStore = defineStore('cafe', () => {
     }
   }
 
+  // Dipanggil setelah create-open-bill berhasil
+  function setActiveTransaction(trx: ActiveTransaction) {
+    activeTransaction.value = trx
+  }
+
+  // Dipanggil setelah add-order-open-bill berhasil — refresh data dari API
+  function clearActiveTransaction() {
+    activeTransaction.value = null
+  }
+
   return {
     cafe,
     table,
     menuCategories,
+    activeTransaction,
     isLoaded,
     isLoading,
     error,
+    isOpenBillTable,
+    hasActiveOpenBill,
     topCategories,
     allMenus,
     fetchCafeData,
+    setActiveTransaction,
+    clearActiveTransaction,
   }
 })

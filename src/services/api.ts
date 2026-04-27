@@ -2,6 +2,10 @@ import type {
   MakeTransactionRequest,
   TransactionResponse,
   TransactionStatusResponse,
+  CreateOpenBillRequest,
+  CreateOpenBillResponse,
+  AddOrderOpenBillRequest,
+  AddOrderOpenBillResponse,
 } from '@/types/api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
@@ -52,9 +56,7 @@ export async function checkAvailableMaterial(
 
   const res = await fetch(url.toString(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
 
@@ -62,8 +64,7 @@ export async function checkAvailableMaterial(
     throw new ApiError(res.status, `API error: ${res.status}`)
   }
 
-  const json = await res.json()
-  return json as CheckMaterialResponse
+  return res.json()
 }
 
 export interface CheckMaterialBulkRequest {
@@ -83,9 +84,7 @@ export async function checkAvailableMaterialBulk(
 
   const res = await fetch(url.toString(), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
 
@@ -93,8 +92,7 @@ export async function checkAvailableMaterialBulk(
     throw new ApiError(res.status, `API error: ${res.status}`)
   }
 
-  const json = await res.json()
-  return json as CheckMaterialBulkResponse
+  return res.json()
 }
 
 export interface MakeTransactionApiResponse {
@@ -132,4 +130,44 @@ export async function getTransactionStatus(
   }
 
   return res.json()
+}
+
+export async function createOpenBill(
+  payload: CreateOpenBillRequest,
+): Promise<CreateOpenBillResponse> {
+  const url = new URL(`${BASE_URL}/create-open-bill`)
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`)
+  }
+
+  return json
+}
+
+export async function addOrderOpenBill(
+  payload: AddOrderOpenBillRequest,
+): Promise<AddOrderOpenBillResponse> {
+  const url = new URL(`${BASE_URL}/add-order-open-bill`)
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`)
+  }
+
+  return json
 }

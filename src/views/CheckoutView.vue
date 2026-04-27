@@ -8,6 +8,13 @@ import { makeTransaction } from '@/services/api'
 import type { TransactionResponse } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
+// Guard: jika open bill mode, redirect kembali ke cart
+import { onMounted } from 'vue'
+onMounted(() => {
+  if (cartStore.isOpenBillMode) {
+    router.replace({ path: '/cart', query: route.query })
+  }
+})
 
 const route = useRoute()
 const router = useRouter()
