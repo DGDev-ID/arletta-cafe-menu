@@ -51,10 +51,13 @@ const promoInput = ref('')
 const discountAmount = computed(() => {
   if (!appliedPromo.value) return 0
   const subtotal = cartStore.totalPrice
-  if (appliedPromo.value.discount_type === 'percentage') {
-    return Math.round((subtotal * appliedPromo.value.discount_value) / 100)
+  const value = parseFloat(appliedPromo.value.value)
+
+  if (appliedPromo.value.type === 'discount_percent') {
+    return Math.round((subtotal * value) / 100)
   }
-  return Math.min(appliedPromo.value.discount_value, subtotal)
+  // discount_amount
+  return Math.min(value, subtotal)
 })
 
 const finalPrice = computed(() => cartStore.totalPrice - discountAmount.value)
@@ -418,14 +421,23 @@ function backToMenu() {
             class="flex items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3"
           >
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+              <div
+                class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0"
+              >
                 <i class="pi pi-check text-success text-sm"></i>
               </div>
               <div class="min-w-0">
                 <p class="text-sm font-bold text-green-700 uppercase tracking-wide">
-                  {{ appliedPromo.code }}
+                  {{ appliedPromo.promo_code }}
                 </p>
-                <p class="text-xs text-green-600 mt-0.5 truncate">{{ appliedPromo.description }}</p>
+                <p class="text-xs text-green-600 mt-0.5">
+                  <template v-if="appliedPromo.type === 'discount_percent'">
+                    Diskon {{ parseFloat(appliedPromo.value) }}%
+                  </template>
+                  <template v-else>
+                    Potongan Rp {{ parseFloat(appliedPromo.value).toLocaleString('id-ID') }}
+                  </template>
+                </p>
                 <p class="text-xs font-semibold text-success mt-0.5">
                   Hemat Rp {{ discountAmount.toLocaleString('id-ID') }}
                 </p>
@@ -449,14 +461,13 @@ function backToMenu() {
             </span>
           </div>
 
-          <!-- Baris diskon — hanya muncul jika promo aktif -->
           <div
             v-if="appliedPromo"
             class="flex justify-between items-center py-2 border-t border-secondary"
           >
             <span class="text-sm text-green-600 flex items-center gap-1.5">
               <i class="pi pi-tag text-[11px]"></i>
-              Diskon ({{ appliedPromo.code }})
+              Diskon ({{ appliedPromo.promo_code }})
             </span>
             <span class="text-sm font-semibold text-success">
               − Rp {{ discountAmount.toLocaleString('id-ID') }}

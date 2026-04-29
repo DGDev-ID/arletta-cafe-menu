@@ -156,10 +156,12 @@ export interface CheckPromoRequest {
 }
 
 export interface PromoData {
-  code: string
-  description: string
-  discount_type: 'percentage' | 'fixed'
-  discount_value: number
+  id: number
+  cafe_id: number
+  promo_code: string
+  type: 'discount_percent' | 'discount_amount'
+  value: string // "15.00" dari backend
+  status: boolean
 }
 
 export interface CheckPromoResponse {

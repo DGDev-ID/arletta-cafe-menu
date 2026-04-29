@@ -180,9 +180,7 @@ export async function addOrderOpenBill(
   return json
 }
 
-export async function checkPromoCode(
-  payload: CheckPromoRequest,
-): Promise<CheckPromoResponse> {
+export async function checkPromoCode(payload: CheckPromoRequest): Promise<CheckPromoResponse> {
   const url = new URL(`${BASE_URL}/check-promo-code`)
 
   const res = await fetch(url.toString(), {
