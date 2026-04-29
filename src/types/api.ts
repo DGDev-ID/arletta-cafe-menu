@@ -28,7 +28,7 @@ export interface CafeTable {
   name: string
   status: string
   description: string
-  is_open_bill: number // 0 | 1
+  is_open_bill: number
   created_at: string
   updated_at: string
 }
@@ -44,10 +44,10 @@ export interface ActiveTransaction {
 export interface ActiveTransactionDetail {
   id: number
   menu_id: number
-  menu_name?: string // dari get-menu-cafe-table (jika ada)
-  menu?: { name: string } // dari add-order-open-bill response
+  menu_name?: string
+  menu?: { name: string }
   amount: number
-  price: number | string // bisa string "15000.00" dari backend
+  price: number | string
   description: string | null
   status: string | null
 }
@@ -93,6 +93,7 @@ export interface MakeTransactionRequest {
   table_id: number
   payment_type: 'manual' | 'qris'
   cust_name?: string
+  promo_code?: string
   details: {
     menu_id: number
     amount: number
@@ -147,4 +148,22 @@ export interface AddOrderOpenBillResponse {
   success: boolean
   message: string
   data: null
+}
+
+export interface CheckPromoRequest {
+  cafe_id: string
+  promo_code: string
+}
+
+export interface PromoData {
+  code: string
+  description: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+}
+
+export interface CheckPromoResponse {
+  success: boolean
+  message: string
+  data: PromoData | null
 }

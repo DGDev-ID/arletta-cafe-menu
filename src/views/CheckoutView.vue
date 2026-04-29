@@ -4,8 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useLocation } from '@/composables/useLocation'
 import { useCafeStore } from '@/stores/cafe'
-import { makeTransaction, ApiError } from '@/services/api'
-import type { TransactionResponse } from '@/types/api'
+import { makeTransaction, checkPromoCode, ApiError } from '@/services/api'
+import type { TransactionResponse, PromoData } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
 
@@ -40,6 +40,61 @@ interface TransactionError {
 }
 const transactionError = ref<TransactionError | null>(null)
 
+// ── Promo ───────────────────────────────────────────────────────
+const promoCode = ref('')
+const isCheckingPromo = ref(false)
+const appliedPromo = ref<PromoData | null>(null)
+const promoError = ref('')
+const promoInput = ref('')
+
+// Hitung diskon berdasarkan promo yang aktif
+const discountAmount = computed(() => {
+  if (!appliedPromo.value) return 0
+  const subtotal = cartStore.totalPrice
+  if (appliedPromo.value.discount_type === 'percentage') {
+    return Math.round((subtotal * appliedPromo.value.discount_value) / 100)
+  }
+  return Math.min(appliedPromo.value.discount_value, subtotal)
+})
+
+const finalPrice = computed(() => cartStore.totalPrice - discountAmount.value)
+
+async function handleCheckPromo() {
+  const code = promoInput.value.trim()
+  if (!code) return
+
+  promoError.value = ''
+  appliedPromo.value = null
+  isCheckingPromo.value = true
+
+  try {
+    const res = await checkPromoCode({
+      cafe_id: cafeStore.cafe!.unique_id,
+      promo_code: code,
+    })
+
+    if (!res.success || !res.data) {
+      promoError.value = res.message || 'Kode promo tidak valid'
+      return
+    }
+
+    appliedPromo.value = res.data
+    promoCode.value = code
+  } catch {
+    promoError.value = 'Gagal memeriksa kode promo'
+  } finally {
+    isCheckingPromo.value = false
+  }
+}
+
+function removePromo() {
+  appliedPromo.value = null
+  promoCode.value = ''
+  promoInput.value = ''
+  promoError.value = ''
+}
+// ────────────────────────────────────────────────────────────────
+
 function generateOrderNumber() {
   const now = new Date()
   return `ARL-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 9000) + 1000)}`
@@ -62,6 +117,7 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
       table_id: cafeStore.table!.id,
       payment_type: normalizedType,
       cust_name: customerName.value.trim(),
+      ...(promoCode.value ? { promo_code: promoCode.value } : {}),
       details: cartStore.items.map((item) => ({
         menu_id: item.id,
         amount: item.quantity,
@@ -226,8 +282,6 @@ function backToMenu() {
             <div class="flex-1">
               <p class="text-sm font-semibold text-red-600 mb-1">Pesanan Gagal</p>
               <p class="text-sm text-red-500 leading-relaxed">{{ transactionError.message }}</p>
-
-              <!-- Daftar menu tidak tersedia -->
               <div
                 v-if="transactionError.unavailableMenus.length > 0"
                 class="mt-3 bg-red-50 rounded-xl p-3"
@@ -244,7 +298,6 @@ function backToMenu() {
                   </li>
                 </ul>
               </div>
-
               <button
                 @click="transactionError = null"
                 class="mt-3 text-xs text-red-400 hover:text-red-600 underline transition-colors"
@@ -324,23 +377,107 @@ function backToMenu() {
           </div>
         </div>
 
+        <!-- ── Kode Promo ── -->
+        <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4">
+          <h3 class="text-sm font-semibold text-text mb-3 flex items-center gap-2">
+            <i class="pi pi-tag text-primary"></i> Kode Promo
+          </h3>
+
+          <!-- Promo belum dipakai -->
+          <div v-if="!appliedPromo" class="flex gap-2">
+            <input
+              v-model="promoInput"
+              type="text"
+              placeholder="Masukkan kode promo"
+              class="flex-1 bg-secondary-light rounded-xl px-4 py-2.5 text-sm text-text placeholder:text-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/30 border border-transparent focus:border-primary/40 transition uppercase"
+              :disabled="isCheckingPromo"
+              @keyup.enter="handleCheckPromo"
+            />
+            <button
+              @click="handleCheckPromo"
+              :disabled="isCheckingPromo || !promoInput.trim()"
+              class="px-4 py-2.5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors duration-200 flex items-center gap-2 shrink-0"
+            >
+              <i v-if="isCheckingPromo" class="pi pi-spin pi-spinner text-xs"></i>
+              <span v-else>Pakai</span>
+            </button>
+          </div>
+
+          <!-- Error promo -->
+          <div
+            v-if="promoError && !appliedPromo"
+            class="mt-2 flex items-center gap-2 text-xs text-red-500"
+          >
+            <i class="pi pi-times-circle text-[10px]"></i>
+            {{ promoError }}
+          </div>
+
+          <!-- Promo berhasil diterapkan -->
+          <div
+            v-if="appliedPromo"
+            class="flex items-center justify-between gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <i class="pi pi-check text-success text-sm"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-green-700 uppercase tracking-wide">
+                  {{ appliedPromo.code }}
+                </p>
+                <p class="text-xs text-green-600 mt-0.5 truncate">{{ appliedPromo.description }}</p>
+                <p class="text-xs font-semibold text-success mt-0.5">
+                  Hemat Rp {{ discountAmount.toLocaleString('id-ID') }}
+                </p>
+              </div>
+            </div>
+            <button
+              @click="removePromo"
+              class="w-7 h-7 flex items-center justify-center rounded-lg text-green-400 hover:bg-green-100 hover:text-green-600 transition-colors shrink-0"
+            >
+              <i class="pi pi-times text-xs"></i>
+            </button>
+          </div>
+        </div>
+
         <!-- Price Summary -->
         <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4">
           <div class="flex justify-between items-center py-2">
             <span class="text-sm text-text-light">Subtotal</span>
-            <span class="text-sm font-medium text-text"
-              >Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span
-            >
+            <span class="text-sm font-medium text-text">
+              Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}
+            </span>
           </div>
+
+          <!-- Baris diskon — hanya muncul jika promo aktif -->
+          <div
+            v-if="appliedPromo"
+            class="flex justify-between items-center py-2 border-t border-secondary"
+          >
+            <span class="text-sm text-green-600 flex items-center gap-1.5">
+              <i class="pi pi-tag text-[11px]"></i>
+              Diskon ({{ appliedPromo.code }})
+            </span>
+            <span class="text-sm font-semibold text-success">
+              − Rp {{ discountAmount.toLocaleString('id-ID') }}
+            </span>
+          </div>
+
           <div class="flex justify-between items-center py-2 border-t border-secondary">
             <span class="text-sm text-text-light">Pajak & Layanan</span>
             <span class="text-sm font-medium text-text-light">Termasuk</span>
           </div>
           <div class="flex justify-between items-center pt-3 mt-2 border-t-2 border-primary/20">
             <span class="text-base font-bold text-text">Total</span>
-            <span class="text-xl font-bold text-primary"
-              >Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span
-            >
+            <div class="text-right">
+              <!-- Harga coret jika ada diskon -->
+              <p v-if="appliedPromo" class="text-xs text-text-light line-through">
+                Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}
+              </p>
+              <span class="text-xl font-bold text-primary">
+                Rp {{ finalPrice.toLocaleString('id-ID') }}
+              </span>
+            </div>
           </div>
         </div>
       </template>
@@ -363,7 +500,7 @@ function backToMenu() {
           </template>
           <template v-else>
             <i class="pi pi-send"></i>
-            Pesan Sekarang — Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}
+            Pesan Sekarang — Rp {{ finalPrice.toLocaleString('id-ID') }}
           </template>
         </button>
       </div>

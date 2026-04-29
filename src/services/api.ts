@@ -6,6 +6,8 @@ import type {
   CreateOpenBillResponse,
   AddOrderOpenBillRequest,
   AddOrderOpenBillResponse,
+  CheckPromoRequest,
+  CheckPromoResponse,
 } from '@/types/api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
@@ -173,6 +175,26 @@ export async function addOrderOpenBill(
 
   if (!res.ok) {
     throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`, json)
+  }
+
+  return json
+}
+
+export async function checkPromoCode(
+  payload: CheckPromoRequest,
+): Promise<CheckPromoResponse> {
+  const url = new URL(`${BASE_URL}/check-promo-code`)
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    return { success: false, message: json?.message ?? 'Promo tidak valid', data: null }
   }
 
   return json
