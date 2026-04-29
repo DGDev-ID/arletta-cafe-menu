@@ -1,15 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiFetch } from '@/services/api'
-import type { ApiResponse, Cafe, CafeTable, MenuCategory, Menu, ActiveTransaction } from '@/types/api'
+import type {
+  ApiResponse,
+  Cafe,
+  CafeTable,
+  MenuCategory,
+  Menu,
+  ActiveTransaction,
+} from '@/types/api'
 
 function normalizeCategories(cats: MenuCategory[]): MenuCategory[] {
   return cats.map((cat) => ({
     ...cat,
     children: normalizeCategories(
-      Array.isArray(cat.children)
-        ? cat.children
-        : Object.values(cat.children ?? {}),
+      Array.isArray(cat.children) ? cat.children : Object.values(cat.children ?? {}),
     ),
   }))
 }

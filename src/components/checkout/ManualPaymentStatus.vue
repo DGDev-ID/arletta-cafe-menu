@@ -159,17 +159,19 @@ onUnmounted(() => {
         <span class="text-text-light">Meja</span>
         <span class="font-medium text-text">{{ transaction.table_name }}</span>
       </div>
-        <div class="flex justify-between text-sm">
-          <span class="text-text-light">Subtotal</span>
-          <span class="font-medium text-text">Rp {{ formatRupiah(transaction.price) }}</span>
-        </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-text-light">Subtotal</span>
+        <span class="font-medium text-text">Rp {{ formatRupiah(transaction.price) }}</span>
+      </div>
       <div class="flex justify-between text-sm">
         <span class="text-text-light">Biaya Layanan</span>
         <span class="font-medium text-text">Rp {{ formatRupiah(transaction.fee) }}</span>
       </div>
       <div class="flex justify-between text-sm pt-2 border-t border-secondary">
         <span class="font-bold text-text">Total</span>
-        <span class="font-bold text-primary text-base">Rp {{ formatRupiah(transaction.total_price) }}</span>
+        <span class="font-bold text-primary text-base"
+          >Rp {{ formatRupiah(transaction.total_price) }}</span
+        >
       </div>
     </div>
 

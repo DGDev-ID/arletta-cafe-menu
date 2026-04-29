@@ -37,7 +37,12 @@ async function handleCheckout() {
     }
     router.push({ path: '/checkout', query: route.query })
   } catch {
-    toast.add({ severity: 'error', summary: 'Gagal', detail: 'Gagal memeriksa ketersediaan item', life: 3000 })
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Gagal memeriksa ketersediaan item',
+      life: 3000,
+    })
   } finally {
     isChecking.value = false
   }
@@ -73,14 +78,14 @@ async function handleSubmitOpenBill() {
       cafeStore.isLoaded = false
       await cafeStore.fetchCafeData(cafe_id, table_id)
 
-      // Re-enter open bill mode dengan data terbaru
+      // Ganti bagian re-enter setelah fetchCafeData berhasil
       const trx = cafeStore.activeTransaction
       if (trx) {
         const locked = trx.details.map((d) => ({
           id: d.id,
           menu_id: d.menu_id,
-          name: d.menu_name,
-          price: d.price,
+          name: d.menu?.name ?? d.menu_name ?? `Menu #${d.menu_id}`,
+          price: typeof d.price === 'string' ? parseFloat(d.price) : d.price,
           quantity: d.amount,
           description: d.description,
           isLocked: true as const,
@@ -132,10 +137,8 @@ async function handleSubmitOpenBill() {
     </div>
 
     <div class="max-w-3xl mx-auto px-4 py-6 pb-36">
-
       <!-- ── OPEN BILL MODE ── -->
       <template v-if="isOpenBill">
-
         <!-- Locked items (sudah dipesan sebelumnya) -->
         <div v-if="cartStore.lockedItems.length > 0" class="mb-6">
           <div class="flex items-center gap-2 mb-3">
@@ -146,22 +149,32 @@ async function handleSubmitOpenBill() {
             </span>
           </div>
           <div class="flex flex-col gap-2">
+            <!-- Ganti bagian locked items card di CartView.vue -->
             <div
               v-for="item in cartStore.lockedItems"
               :key="item.id"
-              class="bg-white rounded-xl border border-secondary p-3 flex items-center gap-3 opacity-75"
+              class="bg-white rounded-xl border border-secondary p-3 flex items-center gap-3"
             >
-              <div class="w-10 h-10 rounded-lg bg-secondary-light flex items-center justify-center shrink-0">
+              <!-- Icon status -->
+              <div
+                class="w-10 h-10 rounded-lg bg-green-50 border border-green-100 flex items-center justify-center shrink-0"
+              >
                 <i class="pi pi-check text-success text-sm"></i>
               </div>
+
+              <!-- Info menu -->
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text truncate">{{ item.name }}</p>
-                <p class="text-xs text-text-light">
+                <p class="text-sm font-semibold text-text truncate">{{ item.name }}</p>
+                <p class="text-xs text-text-light mt-0.5">
                   {{ item.quantity }}x @ Rp {{ item.price.toLocaleString('id-ID') }}
                 </p>
-                <p v-if="item.description" class="text-xs text-text-light mt-0.5">{{ item.description }}</p>
+                <p v-if="item.description" class="text-xs text-text-light/70 mt-0.5 italic">
+                  {{ item.description }}
+                </p>
               </div>
-              <span class="text-sm font-semibold text-text-light shrink-0">
+
+              <!-- Subtotal -->
+              <span class="text-sm font-semibold text-text shrink-0">
                 Rp {{ (item.price * item.quantity).toLocaleString('id-ID') }}
               </span>
             </div>
@@ -169,9 +182,14 @@ async function handleSubmitOpenBill() {
         </div>
 
         <!-- Divider -->
-        <div v-if="cartStore.lockedItems.length > 0 && !cartStore.isEmpty" class="flex items-center gap-2 mb-4">
+        <div
+          v-if="cartStore.lockedItems.length > 0 && !cartStore.isEmpty"
+          class="flex items-center gap-2 mb-4"
+        >
           <div class="h-px flex-1 bg-secondary"></div>
-          <span class="text-xs font-semibold text-text-light uppercase tracking-wider">Tambah Baru</span>
+          <span class="text-xs font-semibold text-text-light uppercase tracking-wider"
+            >Tambah Baru</span
+          >
           <div class="h-px flex-1 bg-secondary"></div>
         </div>
 
@@ -197,10 +215,7 @@ async function handleSubmitOpenBill() {
           </RouterLink>
         </div>
 
-        <div
-          v-else-if="cartStore.isEmpty"
-          class="text-center py-8 text-text-light"
-        >
+        <div v-else-if="cartStore.isEmpty" class="text-center py-8 text-text-light">
           <i class="pi pi-plus-circle text-3xl text-accent mb-3 block"></i>
           <p class="text-sm font-medium">Tambahkan menu baru ke open bill</p>
           <RouterLink
@@ -231,7 +246,6 @@ async function handleSubmitOpenBill() {
           <CartItemCard v-for="item in cartStore.items" :key="item.id" :item="item" />
         </div>
       </template>
-
     </div>
 
     <!-- ── Bottom Bar ── -->
@@ -247,11 +261,15 @@ async function handleSubmitOpenBill() {
           <div class="text-sm text-text-light">
             <span v-if="cartStore.lockedItems.length > 0">
               Sudah dipesan:
-              <span class="font-medium text-text">Rp {{ cartStore.lockedTotalPrice.toLocaleString('id-ID') }}</span>
+              <span class="font-medium text-text"
+                >Rp {{ cartStore.lockedTotalPrice.toLocaleString('id-ID') }}</span
+              >
             </span>
             <span v-if="!cartStore.isEmpty" :class="{ 'ml-3': cartStore.lockedItems.length > 0 }">
               Baru:
-              <span class="font-medium text-primary">Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span>
+              <span class="font-medium text-primary"
+                >Rp {{ cartStore.totalPrice.toLocaleString('id-ID') }}</span
+              >
             </span>
           </div>
         </div>

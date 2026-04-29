@@ -44,11 +44,12 @@ export interface ActiveTransaction {
 export interface ActiveTransactionDetail {
   id: number
   menu_id: number
-  menu_name: string
+  menu_name?: string // dari get-menu-cafe-table (jika ada)
+  menu?: { name: string } // dari add-order-open-bill response
   amount: number
-  price: number
+  price: number | string // bisa string "15000.00" dari backend
   description: string | null
-  status: string | null // 'pending' | 'success' | null
+  status: string | null
 }
 
 export interface Menu {

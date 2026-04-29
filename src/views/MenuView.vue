@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// removed unused Inertia import (not used in this app)
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCafeStore } from '@/stores/cafe'
@@ -23,44 +22,43 @@ const openBillCustomerName = ref('')
 const isCreatingOpenBill = ref(false)
 const openBillNameError = ref('')
 
-// Logika inisialisasi: dijalankan saat data cafe sudah siap
-onMounted(() => {
-  initOpenBillFlow()
-})
-
-// Juga watch jika data baru saja selesai di-fetch (router guard async)
-watch(() => cafeStore.isLoaded, (loaded) => {
-  if (loaded) initOpenBillFlow()
-}, { immediate: true })
+// Flag untuk mencegah initOpenBillFlow dipanggil lebih dari sekali
+const initialized = ref(false)
 
 function initOpenBillFlow() {
   if (!cafeStore.isLoaded) return
+  if (initialized.value) return
+  initialized.value = true
 
-  const isOpenBill = cafeStore.isOpenBillTable
-
-  if (!isOpenBill) {
-    // Meja biasa — flow normal, tidak perlu apa-apa
+  if (!cafeStore.isOpenBillTable) {
     cartStore.clearOpenBillMode()
     return
   }
 
   const activeTrx = cafeStore.activeTransaction
-
   if (activeTrx) {
-    // Sudah ada open bill aktif — langsung masuk mode open bill
     enterOpenBillMode(activeTrx)
   } else {
-    // Meja open bill tapi belum ada transaksi — tampilkan modal pilih jenis order
     showOrderTypeModal.value = true
   }
 }
+
+// Hanya gunakan watch dengan immediate, hapus onMounted untuk hindari double call
+watch(
+  () => cafeStore.isLoaded,
+  (loaded) => {
+    if (loaded) initOpenBillFlow()
+  },
+  { immediate: true },
+)
 
 function enterOpenBillMode(trx: NonNullable<typeof cafeStore.activeTransaction>) {
   const locked = trx.details.map((d) => ({
     id: d.id,
     menu_id: d.menu_id,
-    name: d.menu_name,
-    price: d.price,
+    // Handle kedua format: menu.name (dari add-order response) atau menu_name (dari get-menu)
+    name: d.menu?.name ?? d.menu_name ?? `Menu #${d.menu_id}`,
+    price: typeof d.price === 'string' ? parseFloat(d.price) : d.price,
     quantity: d.amount,
     description: d.description,
     isLocked: true as const,
@@ -110,7 +108,7 @@ async function handleChooseOpenBill() {
   }
 }
 
-// ── Menu & Category (sama seperti sebelumnya) ───────────────────
+// ── Menu & Category ─────────────────────────────────────────────
 const activeCategory = ref<number | null>(null)
 const searchQuery = ref<string>('')
 
@@ -132,7 +130,8 @@ const searchResults = computed(() => {
   if (!isSearching.value) return []
   const q = normalizedQuery.value
   return cafeStore.allMenus.filter(
-    (item) => item.name.toLowerCase().includes(q) || (item.description ?? '').toLowerCase().includes(q),
+    (item) =>
+      item.name.toLowerCase().includes(q) || (item.description ?? '').toLowerCase().includes(q),
   )
 })
 
@@ -171,25 +170,21 @@ function clearSearch() {
 
 <template>
   <div class="min-h-screen bg-bg">
-
     <!-- ── Modal Pilih Jenis Order ── -->
     <Transition name="modal-fade">
       <div
         v-if="showOrderTypeModal"
         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       >
-        <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-        <!-- Sheet -->
-        <div class="relative w-full sm:max-w-md bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden">
-          <!-- Handle bar (mobile) -->
+        <div
+          class="relative w-full sm:max-w-md bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
+        >
           <div class="flex justify-center pt-3 pb-1 sm:hidden">
             <div class="w-10 h-1 rounded-full bg-secondary" />
           </div>
 
           <div class="px-6 pt-4 pb-8">
-            <!-- Icon -->
             <div class="flex justify-center mb-4">
               <div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
                 <i class="pi pi-list text-primary text-2xl"></i>
@@ -201,12 +196,13 @@ function clearSearch() {
               Meja ini mendukung Open Bill. Pilih cara pemesananmu.
             </p>
 
-            <!-- Pilihan kartu -->
             <div class="flex flex-col gap-3 mb-6">
               <!-- Open Bill -->
               <div class="border-2 border-primary rounded-2xl p-4">
                 <div class="flex items-start gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <div
+                    class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"
+                  >
                     <i class="pi pi-receipt text-primary"></i>
                   </div>
                   <div class="flex-1">
@@ -216,8 +212,6 @@ function clearSearch() {
                     </p>
                   </div>
                 </div>
-
-                <!-- Input nama untuk open bill -->
                 <div class="mt-3">
                   <input
                     v-model="openBillCustomerName"
@@ -230,7 +224,6 @@ function clearSearch() {
                     {{ openBillNameError }}
                   </p>
                 </div>
-
                 <button
                   @click="handleChooseOpenBill"
                   :disabled="isCreatingOpenBill"
@@ -249,7 +242,9 @@ function clearSearch() {
                 @click="handleChooseNormal"
                 class="w-full border border-secondary rounded-2xl p-4 text-left hover:bg-secondary-light transition-colors duration-200 flex items-start gap-3"
               >
-                <div class="w-10 h-10 rounded-xl bg-secondary-light flex items-center justify-center shrink-0 mt-0.5">
+                <div
+                  class="w-10 h-10 rounded-xl bg-secondary-light flex items-center justify-center shrink-0 mt-0.5"
+                >
                   <i class="pi pi-shopping-cart text-text-light"></i>
                 </div>
                 <div>
@@ -265,28 +260,17 @@ function clearSearch() {
       </div>
     </Transition>
 
-    <!-- ── Open Bill Badge (indicator di halaman menu) ── -->
-    <div
-      v-if="cartStore.isOpenBillMode && cafeStore.activeTransaction"
-      class="fixed top-0 left-0 right-0 z-30 bg-primary text-white text-center text-xs font-semibold py-2 px-4 flex items-center justify-center gap-2"
-    >
-      <i class="pi pi-receipt text-[10px]"></i>
-      Open Bill aktif — {{ cafeStore.activeTransaction.cust_name ?? 'Pelanggan' }}
-      <span class="opacity-70">· Pembayaran di kasir</span>
-    </div>
-
-    <!-- Hero Banner -->
-    <div
-      class="relative h-48 sm:h-56 md:h-64 overflow-hidden"
-      :class="{ 'mt-8': cartStore.isOpenBillMode }"
-    >
+    <!-- Hero Banner — tidak ada mt tambahan, navbar sudah handle spacing -->
+    <div class="relative h-48 sm:h-56 md:h-64 overflow-hidden">
       <img
         src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&h=400&fit=crop&crop=center"
         alt="Arletta Cafe"
         class="w-full h-full object-cover"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20" />
-      <div class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
+      <div
+        class="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4"
+      >
         <h2 class="text-2xl sm:text-3xl font-bold mb-1 drop-shadow-lg">Selamat Datang!</h2>
         <p class="text-white/80 text-sm sm:text-base drop-shadow-md">
           Pilih menu favoritmu dan pesan langsung dari mejamu
@@ -334,7 +318,9 @@ function clearSearch() {
     <!-- Search Bar -->
     <div class="max-w-5xl mx-auto px-4 mt-3 relative z-10">
       <div class="relative">
-        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-text-light text-sm pointer-events-none" />
+        <i
+          class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-text-light text-sm pointer-events-none"
+        />
         <input
           v-model="searchQuery"
           type="text"

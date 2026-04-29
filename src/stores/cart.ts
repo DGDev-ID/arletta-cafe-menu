@@ -15,13 +15,13 @@ export interface CartItem {
 
 // Item yang sudah ada di open bill (dari server), read-only di cart
 export interface LockedCartItem {
-  id: number         // transaction_detail.id
+  id: number // transaction_detail.id
   menu_id: number
   name: string
   price: number
   quantity: number
   description: string | null
-  isLocked: true     // penanda item dari server
+  isLocked: true // penanda item dari server
 }
 
 const CART_STORAGE_KEY = 'arletta-cafe-cart'
@@ -56,16 +56,20 @@ export const useCartStore = defineStore('cart', () => {
   // Flag: apakah sedang dalam mode open bill
   const isOpenBillMode = ref(false)
 
-  watch(items, (newItems) => { saveCartToStorage(newItems) }, { deep: true })
+  watch(
+    items,
+    (newItems) => {
+      saveCartToStorage(newItems)
+    },
+    { deep: true },
+  )
 
   // Getters
   const totalPrice = computed(() =>
     items.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
   )
 
-  const totalItems = computed(() =>
-    items.value.reduce((sum, item) => sum + item.quantity, 0),
-  )
+  const totalItems = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
 
   const isEmpty = computed(() => items.value.length === 0)
 
@@ -168,16 +172,23 @@ export const useCartStore = defineStore('cart', () => {
     return { success: result.success, message: result.message }
   }
 
-  async function checkAndIncreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  async function checkAndIncreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
-    const result = await checkAvailableMaterial({ menu_id: itemId, quantity: cartItem.quantity + 1 })
+    const result = await checkAvailableMaterial({
+      menu_id: itemId,
+      quantity: cartItem.quantity + 1,
+    })
     if (!result.success) return { success: false, message: result.message }
     increaseQty(itemId)
     return { success: true, message: result.message }
   }
 
-  async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  async function checkAndDecreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
     const nextQty = cartItem.quantity - 1

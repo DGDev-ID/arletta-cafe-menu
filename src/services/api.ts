@@ -11,12 +11,16 @@ import type {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
 export class ApiError extends Error {
+  public data?: unknown
+
   constructor(
     public status: number,
     message: string,
+    data?: unknown,
   ) {
     super(message)
     this.name = 'ApiError'
+    this.data = data
   }
 }
 
@@ -112,11 +116,13 @@ export async function makeTransaction(
     body: JSON.stringify(payload),
   })
 
+  const json = await res.json()
+
   if (!res.ok) {
-    throw new ApiError(res.status, `API error: ${res.status}`)
+    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`, json)
   }
 
-  return res.json()
+  return json
 }
 
 export async function getTransactionStatus(
@@ -146,7 +152,7 @@ export async function createOpenBill(
   const json = await res.json()
 
   if (!res.ok) {
-    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`)
+    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`, json)
   }
 
   return json
@@ -166,7 +172,7 @@ export async function addOrderOpenBill(
   const json = await res.json()
 
   if (!res.ok) {
-    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`)
+    throw new ApiError(res.status, json?.message ?? `API error: ${res.status}`, json)
   }
 
   return json

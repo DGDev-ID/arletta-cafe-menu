@@ -1,26 +1,25 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useLocation } from '@/composables/useLocation'
 import { useCafeStore } from '@/stores/cafe'
-import { makeTransaction } from '@/services/api'
+import { makeTransaction, ApiError } from '@/services/api'
 import type { TransactionResponse } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
-// Guard: jika open bill mode, redirect kembali ke cart
-import { onMounted } from 'vue'
-onMounted(() => {
-  if (cartStore.isOpenBillMode) {
-    router.replace({ path: '/cart', query: route.query })
-  }
-})
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 const cafeStore = useCafeStore()
 const { cafeName, locationLabel, locationIcon, deliveryMessage } = useLocation()
+
+onMounted(() => {
+  if (cartStore.isOpenBillMode) {
+    router.replace({ path: '/cart', query: route.query })
+  }
+})
 
 const isOrdering = ref(false)
 const orderSuccess = ref(false)
@@ -34,6 +33,13 @@ const showPaymentModal = ref(false)
 const transactionData = ref<TransactionResponse | null>(null)
 const showManualPayment = ref(false)
 
+// Error state
+interface TransactionError {
+  message: string
+  unavailableMenus: string[]
+}
+const transactionError = ref<TransactionError | null>(null)
+
 function generateOrderNumber() {
   const now = new Date()
   return `ARL-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 9000) + 1000)}`
@@ -41,16 +47,18 @@ function generateOrderNumber() {
 
 function handleOrder() {
   if (!isCustomerValid.value) return
+  transactionError.value = null
   showPaymentModal.value = true
 }
 
 async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
-  // normalize older/alternate 'qr' value to 'qris'
   const normalizedType = type === 'qr' ? 'qris' : type
   isOrdering.value = true
+  transactionError.value = null
+
   try {
     const payload = {
-      cafe_id: cafeStore.cafe!.unique_id, // unique_id (string like CAFE-001)
+      cafe_id: cafeStore.cafe!.unique_id,
       table_id: cafeStore.table!.id,
       payment_type: normalizedType,
       cust_name: customerName.value.trim(),
@@ -63,25 +71,41 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
 
     const res = await makeTransaction(payload)
 
-    if (!res.success) {
-      showPaymentModal.value = false
-      return
-    }
-
     transactionData.value = res.data
     showPaymentModal.value = false
 
     if (normalizedType === 'qris') {
-      // Load Midtrans snap
-      const snapToken = res.data.snap_token!
-      loadMidtransSnap(snapToken)
+      loadMidtransSnap(res.data.snap_token!)
     } else {
       showManualPayment.value = true
       savedCustomer.value = customerName.value.trim()
       cartStore.clearCart()
     }
-  } catch {
+  } catch (err: unknown) {
     showPaymentModal.value = false
+
+    if (err instanceof ApiError) {
+      if (err.status === 400) {
+        const errData = err.data as {
+          message: string
+          errors: { unavailable_menus?: string[] } | null
+        } | null
+        transactionError.value = {
+          message: errData?.message ?? err.message,
+          unavailableMenus: errData?.errors?.unavailable_menus ?? [],
+        }
+      } else {
+        transactionError.value = {
+          message: 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.',
+          unavailableMenus: [],
+        }
+      }
+    } else {
+      transactionError.value = {
+        message: 'Terjadi kesalahan. Silakan coba lagi.',
+        unavailableMenus: [],
+      }
+    }
   } finally {
     isOrdering.value = false
   }
@@ -100,15 +124,9 @@ function loadMidtransSnap(snapToken: string) {
         orderNumber.value = generateOrderNumber()
         orderSuccess.value = true
       },
-      onPending: () => {
-        // tetap di halaman
-      },
-      onError: () => {
-        // handle error
-      },
-      onClose: () => {
-        // user tutup snap tanpa bayar
-      },
+      onPending: () => {},
+      onError: () => {},
+      onClose: () => {},
     })
   }
   document.body.appendChild(script)
@@ -201,6 +219,42 @@ function backToMenu() {
       </div>
 
       <template v-else>
+        <!-- Transaction Error -->
+        <div v-if="transactionError" class="bg-white rounded-2xl border border-red-200 p-4 mb-4">
+          <div class="flex items-start gap-3">
+            <i class="pi pi-exclamation-circle text-red-500 text-lg mt-0.5 shrink-0"></i>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-red-600 mb-1">Pesanan Gagal</p>
+              <p class="text-sm text-red-500 leading-relaxed">{{ transactionError.message }}</p>
+
+              <!-- Daftar menu tidak tersedia -->
+              <div
+                v-if="transactionError.unavailableMenus.length > 0"
+                class="mt-3 bg-red-50 rounded-xl p-3"
+              >
+                <p class="text-xs font-semibold text-red-500 mb-2">Menu tidak tersedia:</p>
+                <ul class="flex flex-col gap-1">
+                  <li
+                    v-for="menu in transactionError.unavailableMenus"
+                    :key="menu"
+                    class="flex items-center gap-2 text-xs text-red-500"
+                  >
+                    <i class="pi pi-times-circle text-[10px] shrink-0"></i>
+                    {{ menu }}
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                @click="transactionError = null"
+                class="mt-3 text-xs text-red-400 hover:text-red-600 underline transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Table Info -->
         <div
           class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4 flex items-center gap-3"
@@ -269,8 +323,6 @@ function backToMenu() {
             </div>
           </div>
         </div>
-
-        <!-- Order Note removed (per-item notes are used instead) -->
 
         <!-- Price Summary -->
         <div class="bg-white rounded-2xl shadow-sm border border-secondary p-4 mb-4">
