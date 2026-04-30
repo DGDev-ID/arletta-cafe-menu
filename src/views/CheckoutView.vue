@@ -63,7 +63,7 @@ const discountAmount = computed(() => {
 const finalPrice = computed(() => cartStore.totalPrice - discountAmount.value)
 
 async function handleCheckPromo() {
-  const code = promoInput.value.trim()
+  const code = promoInput.value.trim().toUpperCase() // ← tambah .toUpperCase()
   if (!code) return
 
   promoError.value = ''
@@ -73,7 +73,7 @@ async function handleCheckPromo() {
   try {
     const res = await checkPromoCode({
       cafe_id: cafeStore.cafe!.unique_id,
-      promo_code: code,
+      promo_code: code, // sudah uppercase
     })
 
     if (!res.success || !res.data) {
@@ -82,7 +82,7 @@ async function handleCheckPromo() {
     }
 
     appliedPromo.value = res.data
-    promoCode.value = code
+    promoCode.value = code // sudah uppercase
   } catch {
     promoError.value = 'Gagal memeriksa kode promo'
   } finally {
