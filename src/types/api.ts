@@ -169,3 +169,67 @@ export interface CheckPromoResponse {
   message: string
   data: PromoData | null
 }
+
+// ─── Landing Page ────────────────────────────────────────────────────────────
+
+export interface LandingMenuPromo {
+  id: number
+  menu_id: number
+  type: 'discount_percent' | 'discount_amount'
+  discount_amount: string
+}
+
+export interface LandingMenuCategory {
+  id: number
+  name: string
+  parent_id: number | null
+}
+
+export interface LandingMenuItem {
+  id: number
+  cafe_id: string
+  menu_category_id: number
+  name: string
+  description: string
+  img_url: string | null
+  price: string
+  status: string
+  category: LandingMenuCategory | null
+  promo: LandingMenuPromo | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LandingGallery {
+  id: number
+  img_url: string
+  created_at: string
+  updated_at: string
+}
+
+export interface LandingCafe {
+  id: string
+  unique_id: string
+  name: string
+  address: string
+  address_coordinate: string | null
+  description: string | null
+  img_url: string | null
+  phone_number: string | null
+  ppn_fee: string | null
+  qris_fee: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LandingPageData {
+  menus: LandingMenuItem[]
+  gallery: LandingGallery[]
+  all_cafe: LandingCafe[]
+}
+
+export interface LandingPageResponse {
+  success: boolean
+  message: string
+  data: LandingPageData
+}

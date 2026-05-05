@@ -1,60 +1,42 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import type { LandingCafe } from '@/types/api'
 
-const stores = [
-  {
-    id: 1,
-    name: 'Arletta Dago',
-    badge: 'Flagship',
-    address: 'Jl. Ir. H. Juanda No. 120, Dago, Bandung',
-    phone: '+62 812 3456 7890',
-    hours: 'Setiap Hari 07.00 — 23.00',
-    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80',
-    mapSrc:
-      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.7985379582!2d107.61691!3d-6.88541!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e652e8f1c1ef%3A0x9e0e74c6d3e6b7a7!2sDago%2C%20Bandung!5e0!3m2!1sen!2sid!4v1700000000000',
-  },
-  {
-    id: 2,
-    name: 'Arletta Braga',
-    badge: 'Heritage',
-    address: 'Jl. Braga No. 58, Braga, Bandung',
-    phone: '+62 813 9876 5432',
-    hours: 'Setiap Hari 08.00 — 22.00',
-    image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80',
-    mapSrc:
-      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.85!2d107.6097!3d-6.9175!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e64c5e1b1b1d%3A0x2e68e64c5e1b1b1d!2sBraga%2C%20Bandung!5e0!3m2!1sen!2sid!4v1700000000001',
-  },
-  {
-    id: 3,
-    name: 'Arletta Paskal',
-    badge: 'New',
-    address: 'Jl. Pasir Kaliki No. 25-27, Paskal, Bandung',
-    phone: '+62 814 5678 1234',
-    hours: 'Setiap Hari 08.00 — 22.00',
-    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80',
-    mapSrc:
-      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.75!2d107.5938!3d-6.9100!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e60073b0b0b1%3A0x2e68e60073b0b0b1!2sPaskal%2C%20Bandung!5e0!3m2!1sen!2sid!4v1700000000002',
-  },
-  {
-    id: 4,
-    name: 'Arletta Setiabudhi',
-    badge: 'Cozy',
-    address: 'Jl. Dr. Setiabudhi No. 88, Bandung',
-    phone: '+62 815 2345 6789',
-    hours: 'Setiap Hari 07.30 — 22.30',
-    image: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80',
-    mapSrc:
-      'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.60!2d107.5900!3d-6.8700!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e5cc5e5e5e5f%3A0x2e68e5cc5e5e5e5f!2sSetiabudhi%2C%20Bandung!5e0!3m2!1sen!2sid!4v1700000000003',
-  },
-]
+const props = defineProps<{
+  stores: LandingCafe[]
+  isLoading: boolean
+}>()
 
-const activeStore = ref(stores[0]!)
+const activeStore = ref<LandingCafe | null>(null)
 const showMap = ref(false)
 
-function selectStore(store: (typeof stores)[number]) {
+// Set default saat data tersedia
+watch(
+  () => props.stores,
+  (val) => {
+    if (val.length > 0 && !activeStore.value) {
+      activeStore.value = val[0]!
+    }
+  },
+  { immediate: true },
+)
+
+function selectStore(store: LandingCafe) {
   activeStore.value = store
   showMap.value = true
 }
+
+/** Google Maps embed dari koordinat "lat,lng" */
+function buildMapSrc(coordinate: string | null, name: string): string {
+  if (!coordinate) return ''
+  const [lat, lng] = coordinate.split(',').map((s) => s.trim())
+  const label = encodeURIComponent(name)
+  return `https://maps.google.com/maps?q=${lat},${lng}&hl=id&z=16&output=embed&t=m&iwloc=B&markers=label:${label}%7C${lat},${lng}`
+}
+
+const mapSrc = computed(() =>
+  activeStore.value ? buildMapSrc(activeStore.value.address_coordinate, activeStore.value.name) : '',
+)
 </script>
 
 <template>
@@ -73,7 +55,26 @@ function selectStore(store: (typeof stores)[number]) {
         </p>
       </div>
 
-      <div class="grid gap-10 lg:grid-cols-5">
+      <!-- Loading skeleton -->
+      <div v-if="isLoading" class="grid gap-10 lg:grid-cols-5">
+        <div class="space-y-4 lg:col-span-2">
+          <div v-for="i in 3" :key="i" class="animate-pulse rounded-2xl bg-white p-5">
+            <div class="flex items-start gap-4">
+              <div class="h-20 w-20 shrink-0 rounded-xl bg-brown-100"></div>
+              <div class="flex-1 space-y-2">
+                <div class="h-5 w-3/4 rounded bg-brown-100"></div>
+                <div class="h-3 w-full rounded bg-brown-100"></div>
+                <div class="h-3 w-1/2 rounded bg-brown-100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lg:col-span-3">
+          <div class="animate-pulse rounded-2xl bg-brown-100" style="height: 510px"></div>
+        </div>
+      </div>
+
+      <div v-else-if="activeStore" class="grid gap-10 lg:grid-cols-5">
         <!-- Store cards (left side) -->
         <div class="space-y-4 lg:col-span-2">
           <button
@@ -90,36 +91,22 @@ function selectStore(store: (typeof stores)[number]) {
             <div class="flex items-start gap-4">
               <!-- Store image thumbnail -->
               <img
-                :src="store.image"
+                :src="store.img_url ?? 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=300&q=80'"
                 :alt="store.name"
                 class="h-20 w-20 shrink-0 rounded-xl object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <div class="min-w-0 flex-1">
                 <div class="mb-1 flex items-center gap-2">
                   <h3 class="text-brown-800 text-lg font-bold">{{ store.name }}</h3>
-                  <span
-                    class="rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase"
-                    :class="
-                      activeStore.id === store.id
-                        ? 'bg-gold text-brown-900'
-                        : 'bg-brown-100 text-brown-500'
-                    "
-                  >
-                    {{ store.badge }}
-                  </span>
                 </div>
                 <p class="text-brown-500 mb-2 text-sm leading-snug">
                   <i class="pi pi-map-marker text-gold mr-1 text-xs"></i>
                   {{ store.address }}
                 </p>
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brown-400">
-                  <span>
+                  <span v-if="store.phone_number">
                     <i class="pi pi-phone text-gold mr-1 text-[10px]"></i>
-                    {{ store.phone }}
-                  </span>
-                  <span>
-                    <i class="pi pi-clock text-gold mr-1 text-[10px]"></i>
-                    {{ store.hours }}
+                    {{ store.phone_number }}
                   </span>
                 </div>
               </div>
@@ -143,9 +130,9 @@ function selectStore(store: (typeof stores)[number]) {
               >
                 <!-- Map view -->
                 <iframe
-                  v-if="showMap"
+                  v-if="showMap && mapSrc"
                   :key="'map-' + activeStore.id"
-                  :src="activeStore.mapSrc"
+                  :src="mapSrc"
                   width="100%"
                   height="460"
                   style="border: 0"
@@ -156,10 +143,22 @@ function selectStore(store: (typeof stores)[number]) {
                   class="w-full"
                 ></iframe>
 
+                <!-- No coordinate fallback -->
+                <div
+                  v-else-if="showMap && !mapSrc"
+                  :key="'no-map-' + activeStore.id"
+                  class="flex h-[460px] items-center justify-center bg-brown-100 text-brown-400"
+                >
+                  <div class="text-center">
+                    <i class="pi pi-map text-4xl mb-3 block"></i>
+                    <p class="text-sm">Koordinat belum tersedia</p>
+                  </div>
+                </div>
+
                 <!-- Image view -->
                 <div v-else :key="'img-' + activeStore.id" class="relative">
                   <img
-                    :src="activeStore.image"
+                    :src="activeStore.img_url ?? 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80'"
                     :alt="activeStore.name"
                     class="h-115 w-full object-cover"
                   />
@@ -184,7 +183,7 @@ function selectStore(store: (typeof stores)[number]) {
                 </div>
                 <div>
                   <p class="text-sm font-semibold text-white">{{ activeStore.name }}</p>
-                  <p class="text-xs text-white/50">{{ activeStore.hours }}</p>
+                  <p class="text-xs text-white/50">{{ activeStore.address }}</p>
                 </div>
               </div>
               <button
@@ -197,6 +196,11 @@ function selectStore(store: (typeof stores)[number]) {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Empty state -->
+      <div v-else class="py-16 text-center text-brown-400">
+        Belum ada data cabang.
       </div>
     </div>
   </section>

@@ -8,6 +8,7 @@ import type {
   AddOrderOpenBillResponse,
   CheckPromoRequest,
   CheckPromoResponse,
+  LandingPageResponse,
 } from '@/types/api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
@@ -196,4 +197,15 @@ export async function checkPromoCode(payload: CheckPromoRequest): Promise<CheckP
   }
 
   return json
+}
+
+export async function getLandingPage(): Promise<LandingPageResponse> {
+  const url = new URL(`${BASE_URL}/landing-page`)
+  const res = await fetch(url.toString())
+
+  if (!res.ok) {
+    throw new ApiError(res.status, `API error: ${res.status}`)
+  }
+
+  return res.json()
 }

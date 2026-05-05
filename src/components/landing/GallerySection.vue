@@ -1,41 +1,10 @@
 <script setup lang="ts">
-const galleryImages = [
-  {
-    src: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=600&q=80',
-    alt: 'Cafe interior',
-    span: 'col-span-2 row-span-2',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80',
-    alt: 'Latte art',
-    span: '',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
-    alt: 'Food plating',
-    span: '',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&q=80',
-    alt: 'Coffee beans',
-    span: '',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=400&q=80',
-    alt: 'Cafe corner',
-    span: '',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80',
-    alt: 'Barista at work',
-    span: 'col-span-2',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80',
-    alt: 'Coffee setup',
-    span: 'col-span-2',
-  },
-]
+import type { LandingGallery } from '@/types/api'
+
+defineProps<{
+  gallery: LandingGallery[]
+  isLoading: boolean
+}>()
 </script>
 
 <template>
@@ -50,16 +19,29 @@ const galleryImages = [
         <div class="bg-gold mx-auto mt-4 h-1 w-16 rounded-full"></div>
       </div>
 
-      <!-- Gallery Grid -->
-      <div class="fade-in grid auto-rows-[250px] grid-cols-2 gap-4 md:grid-cols-4">
+      <!-- Loading skeleton -->
+      <div v-if="isLoading" class="fade-in grid auto-rows-[250px] grid-cols-2 gap-4 md:grid-cols-4">
         <div
-          v-for="(img, idx) in galleryImages"
-          :key="idx"
-          :class="['group relative cursor-pointer overflow-hidden rounded-2xl', img.span]"
+          v-for="i in 7"
+          :key="i"
+          class="animate-pulse rounded-2xl bg-brown-100"
+          :class="i === 1 ? 'col-span-2 row-span-2' : i >= 6 ? 'col-span-2' : ''"
+        ></div>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div v-else class="fade-in grid auto-rows-[250px] grid-cols-2 gap-4 md:grid-cols-4">
+        <div
+          v-for="(img, idx) in gallery"
+          :key="img.id"
+          :class="[
+            'group relative cursor-pointer overflow-hidden rounded-2xl',
+            idx === 0 ? 'col-span-2 row-span-2' : idx >= gallery.length - 2 ? 'col-span-2' : '',
+          ]"
         >
           <img
-            :src="img.src"
-            :alt="img.alt"
+            :src="img.img_url"
+            :alt="'Gallery ' + (idx + 1)"
             class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <!-- Overlay -->
@@ -70,6 +52,14 @@ const galleryImages = [
               class="pi pi-search-plus text-2xl text-white opacity-0 transition-all duration-500 group-hover:opacity-100"
             ></i>
           </div>
+        </div>
+
+        <!-- Empty state -->
+        <div
+          v-if="gallery.length === 0"
+          class="col-span-4 py-16 text-center text-brown-400"
+        >
+          Belum ada foto galeri.
         </div>
       </div>
     </div>

@@ -2,6 +2,12 @@ import { onMounted, onUnmounted } from 'vue'
 
 export function useScrollAnimation() {
   let observer: IntersectionObserver | null = null
+  let mutationObserver: MutationObserver | null = null
+
+  function observeElements() {
+    const elements = document.querySelectorAll('.fade-in:not(.visible), .fade-in-left:not(.visible), .fade-in-right:not(.visible)')
+    elements.forEach((el) => observer?.observe(el))
+  }
 
   onMounted(() => {
     observer = new IntersectionObserver(
@@ -15,11 +21,17 @@ export function useScrollAnimation() {
       { threshold: 0.1, rootMargin: '0px 0px -50px 0px' },
     )
 
-    const elements = document.querySelectorAll('.fade-in, .fade-in-left, .fade-in-right')
-    elements.forEach((el) => observer?.observe(el))
+    observeElements()
+
+    // Watch for newly added fade-in elements (e.g. rendered after API data loads)
+    mutationObserver = new MutationObserver(() => {
+      observeElements()
+    })
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
   })
 
   onUnmounted(() => {
     observer?.disconnect()
+    mutationObserver?.disconnect()
   })
 }

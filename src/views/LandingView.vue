@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useScrollAnimation } from '@/composables/useScrollAnimation'
+import { useLandingPage } from '@/composables/useLandingPage'
 import LandingNavbar from '@/components/landing/LandingNavbar.vue'
 import HeroSection from '@/components/landing/HeroSection.vue'
 import AboutSection from '@/components/landing/AboutSection.vue'
@@ -12,6 +13,8 @@ import ContactSection from '@/components/landing/ContactSection.vue'
 import FooterSection from '@/components/landing/FooterSection.vue'
 
 useScrollAnimation()
+
+const { menus, gallery, allCafe, isLoading } = useLandingPage()
 </script>
 
 <template>
@@ -19,9 +22,9 @@ useScrollAnimation()
     <LandingNavbar />
     <HeroSection />
     <AboutSection />
-    <MenuSection />
-    <GallerySection />
-    <StoreSection />
+    <MenuSection :menus="menus" :is-loading="isLoading" />
+    <GallerySection :gallery="gallery" :is-loading="isLoading" />
+    <StoreSection :stores="allCafe" :is-loading="isLoading" />
     <TestimonialSection />
     <InstagramSection />
     <ContactSection />

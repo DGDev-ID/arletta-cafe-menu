@@ -3,7 +3,7 @@ const contactInfo = [
   {
     icon: 'pi pi-map-marker',
     title: 'Visit Us',
-    lines: ['Jl. Merdeka No. 42', 'Bandung, Jawa Barat 40115'],
+    lines: ['Gang Kelapa Gading RT 02 / RW 01, Kel. Wates, Kec. Ngaliyan Semarang Barat, Jawa Tengah'],
   },
   {
     icon: 'pi pi-phone',
@@ -13,7 +13,7 @@ const contactInfo = [
   {
     icon: 'pi pi-envelope',
     title: 'Email Us',
-    lines: ['hello@arlettacafe.id', 'reservations@arlettacafe.id'],
+    lines: ['cs@arletta.com'],
   },
 ]
 
@@ -83,7 +83,7 @@ const socialLinks = [
         <!-- Map -->
         <div class="fade-in-right overflow-hidden rounded-2xl shadow-lg">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.7985379582!2d107.60867561477257!3d-6.914747795003288!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e68e652e8f1c1ef%3A0x9e0e74c6d3e6b7a7!2sBandung%2C%20Bandung%20City%2C%20West%20Java!5e0!3m2!1sen!2sid!4v1700000000000!5m2!1sen!2sid"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.906877847514!2d110.3355297!3d-7.0202317!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e708b0004b5d617%3A0x436b6e9b05a713cd!2sarletta%20cafe!5e0!3m2!1sen!2sid!4v1777969718247!5m2!1sen!2sid"
             width="100%"
             height="420"
             style="border: 0"
