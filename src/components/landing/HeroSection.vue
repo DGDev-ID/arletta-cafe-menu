@@ -63,6 +63,15 @@ function scrollTo(href: string) {
           <i class="pi pi-map-marker text-sm"></i>
           Visit Us
         </a>
+        <a
+          href="https://arlettaluxury.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 text-sm font-semibold tracking-wider text-white uppercase transition-all duration-300 hover:border-white hover:bg-white/10"
+        >
+          <i class="pi pi-arrow-up-right text-sm"></i>
+          Back to Arletta
+        </a>
       </div>
     </div>
 
