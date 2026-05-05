@@ -35,7 +35,9 @@ function buildMapSrc(coordinate: string | null, name: string): string {
 }
 
 const mapSrc = computed(() =>
-  activeStore.value ? buildMapSrc(activeStore.value.address_coordinate, activeStore.value.name) : '',
+  activeStore.value
+    ? buildMapSrc(activeStore.value.address_coordinate, activeStore.value.name)
+    : '',
 )
 </script>
 
@@ -50,7 +52,7 @@ const mapSrc = computed(() =>
         <h2 class="font-heading text-brown-800 mt-3 text-4xl font-bold md:text-5xl">Our Stores</h2>
         <div class="bg-gold mx-auto mt-4 h-1 w-16 rounded-full"></div>
         <p class="text-brown-500 mx-auto mt-5 max-w-xl text-base">
-          Visit any of our branches across Bandung. Each location offers the same premium Arletta
+          Visit any of our branches across Semarang. Each location offers the same premium Arletta
           experience with its own unique charm.
         </p>
       </div>
@@ -91,7 +93,10 @@ const mapSrc = computed(() =>
             <div class="flex items-start gap-4">
               <!-- Store image thumbnail -->
               <img
-                :src="store.img_url ?? 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=300&q=80'"
+                :src="
+                  store.img_url ??
+                  'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=300&q=80'
+                "
                 :alt="store.name"
                 class="h-20 w-20 shrink-0 rounded-xl object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -158,7 +163,10 @@ const mapSrc = computed(() =>
                 <!-- Image view -->
                 <div v-else :key="'img-' + activeStore.id" class="relative">
                   <img
-                    :src="activeStore.img_url ?? 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80'"
+                    :src="
+                      activeStore.img_url ??
+                      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80'
+                    "
                     :alt="activeStore.name"
                     class="h-115 w-full object-cover"
                   />
@@ -199,9 +207,7 @@ const mapSrc = computed(() =>
       </div>
 
       <!-- Empty state -->
-      <div v-else class="py-16 text-center text-brown-400">
-        Belum ada data cabang.
-      </div>
+      <div v-else class="py-16 text-center text-brown-400">Belum ada data cabang.</div>
     </div>
   </section>
 </template>

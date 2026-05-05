@@ -122,7 +122,7 @@ function scrollTo(href: string) {
           &copy; {{ currentYear }} Arletta Cafe & Eatery. All rights reserved.
         </p>
         <p class="text-xs text-white/30">
-          Crafted with <i class="pi pi-heart-fill text-gold mx-1 text-[10px]"></i> in Bandung
+          Crafted with <i class="pi pi-heart-fill text-gold mx-1 text-[10px]"></i> in Semarang
         </p>
       </div>
     </div>
