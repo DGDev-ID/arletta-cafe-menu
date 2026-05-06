@@ -45,12 +45,12 @@ const features = [
             />
           </div>
           <!-- Floating card -->
-          <div
+          <!-- <div
             class="bg-brown-800 absolute -bottom-6 -right-4 rounded-xl p-5 text-white shadow-xl md:-right-8"
           >
             <div class="font-heading text-3xl font-bold text-gold">2+</div>
             <div class="text-sm text-white/70">Years of Excellence</div>
-          </div>
+          </div> -->
         </div>
 
         <!-- Text -->

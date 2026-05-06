@@ -45,7 +45,7 @@ function scrollTo(href: string) {
             Crafting memorable moments through exceptional coffee and culinary experiences since
             2024.
           </p>
-          <div class="flex gap-3">
+          <!-- <div class="flex gap-3">
             <a
               v-for="social in socialLinks"
               :key="social.label"
@@ -55,7 +55,7 @@ function scrollTo(href: string) {
             >
               <i :class="social.icon" class="text-xs"></i>
             </a>
-          </div>
+          </div> -->
         </div>
 
         <!-- Quick Links -->

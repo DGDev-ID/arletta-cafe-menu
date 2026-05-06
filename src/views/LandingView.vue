@@ -25,8 +25,8 @@ const { menus, gallery, allCafe, isLoading } = useLandingPage()
     <MenuSection :menus="menus" :is-loading="isLoading" />
     <GallerySection :gallery="gallery" :is-loading="isLoading" />
     <StoreSection :stores="allCafe" :is-loading="isLoading" />
-    <TestimonialSection />
-    <InstagramSection />
+    <!-- <TestimonialSection /> -->
+    <!-- <InstagramSection /> -->
     <ContactSection />
     <FooterSection />
   </div>
