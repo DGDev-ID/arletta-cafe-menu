@@ -42,8 +42,7 @@ function scrollTo(href: string) {
             </span>
           </div>
           <p class="mb-6 text-sm leading-relaxed text-white/50">
-            Crafting memorable moments through exceptional coffee and culinary experiences since
-            2024.
+            Crafting memorable moments through exceptional coffee and culinary
           </p>
           <!-- <div class="flex gap-3">
             <a

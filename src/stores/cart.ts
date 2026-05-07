@@ -80,10 +80,14 @@ export const useCartStore = defineStore('cart', () => {
 
   // Actions
   function setOpenBillMode(locked: LockedCartItem[]) {
+    const wasAlreadyOpenBill = isOpenBillMode.value
     isOpenBillMode.value = true
     lockedItems.value = locked
-    // Reset cart baru saat masuk open bill
-    items.value = []
+    // Reset cart hanya saat pertama kali masuk open bill,
+    // bukan saat re-enter (misal kembali dari CartView ke MenuView)
+    if (!wasAlreadyOpenBill) {
+      items.value = []
+    }
   }
 
   function clearOpenBillMode() {
