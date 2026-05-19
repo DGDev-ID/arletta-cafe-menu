@@ -72,6 +72,9 @@ async function handleSubmitOpenBill() {
       life: 4000,
     })
 
+    // Clear cart items yang baru saja dikirim
+    cartStore.clearCart()
+
     // Refresh data dari API agar locked items terupdate
     const { cafe_id, table_id } = route.query
     if (typeof cafe_id === 'string' && typeof table_id === 'string') {
