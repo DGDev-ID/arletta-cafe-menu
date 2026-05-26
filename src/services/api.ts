@@ -9,6 +9,7 @@ import type {
   CheckPromoRequest,
   CheckPromoResponse,
   LandingPageResponse,
+  SelectedVariant,
 } from '@/types/api'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
@@ -48,6 +49,7 @@ export async function apiFetch<T>(endpoint: string, params?: Record<string, stri
 export interface CheckMaterialRequest {
   menu_id: number
   quantity: number
+  selected_variants?: SelectedVariant[]
 }
 
 export interface CheckMaterialResponse {
