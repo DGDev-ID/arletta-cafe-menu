@@ -120,6 +120,7 @@ export interface TransactionResponse {
   details: TransactionDetail[]
   snap_token?: string
   qr_code?: string
+  expired_at?: string
 }
 
 export interface TransactionStatusResponse {

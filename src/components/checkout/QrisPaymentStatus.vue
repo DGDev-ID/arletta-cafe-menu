@@ -18,7 +18,10 @@ const status = ref<PaymentStatus>('pending')
 const isPolling = ref(true)
 const qrDataUrl = ref<string>('')
 const isDownloading = ref(false)
+const timeLeft = ref<string>('')
+
 let intervalId: ReturnType<typeof setInterval> | null = null
+let countdownId: ReturnType<typeof setInterval> | null = null
 
 const statusConfig = computed(() => {
   const map: Record<PaymentStatus, { label: string; icon: string; color: string; bg: string }> = {
@@ -57,6 +60,19 @@ function formatRupiah(value: number | string) {
   } catch {
     return String(value)
   }
+}
+
+function updateCountdown() {
+  if (!props.transaction.expired_at) return
+  const diff = new Date(props.transaction.expired_at).getTime() - Date.now()
+  if (diff <= 0) {
+    timeLeft.value = 'Kedaluwarsa'
+    if (countdownId) clearInterval(countdownId)
+    return
+  }
+  const m = Math.floor(diff / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  timeLeft.value = `${m}:${s.toString().padStart(2, '0')}`
 }
 
 async function generateQR() {
@@ -107,7 +123,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-// Render canvas pada 2× lalu ekspor → teks tajam & tidak gepeng
 function createHiDpiCanvas(
   w: number,
   h: number,
@@ -142,31 +157,24 @@ function roundRect(
   ctx.closePath()
 }
 
-// Logo QRIS digambar manual — bebas CORS
 function drawQrisLogo(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.save()
   ctx.translate(x, y)
 
-  const S = 22 // ukuran kotak outer
-  const g = 3 // gap
-  const sq = 6 // inner square
+  const S = 22
+  const g = 3
+  const sq = 6
 
-  // Outer border
   ctx.strokeStyle = '#ffffff'
   ctx.lineWidth = 2
   ctx.strokeRect(0, 0, S, S)
 
-  // Pojok kiri atas
   ctx.fillStyle = '#ffffff'
   ctx.fillRect(g, g, sq, sq)
-  // Pojok kanan atas
   ctx.fillRect(S - g - sq, g, sq, sq)
-  // Pojok kiri bawah
   ctx.fillRect(g, S - g - sq, sq, sq)
-  // Center dot
   ctx.fillRect(S / 2 - 2, S / 2 - 2, 5, 5)
 
-  // Teks QRIS
   ctx.fillStyle = '#ffffff'
   ctx.font = 'bold 16px Georgia, serif'
   ctx.textBaseline = 'middle'
@@ -181,17 +189,14 @@ async function downloadQR() {
   isDownloading.value = true
 
   try {
-    // Ukuran logis (CSS px) → mobile portrait
     const W = 390
     const H = 844
 
     const { canvas, ctx } = createHiDpiCanvas(W, H)
 
-    // ── Background cream muda ─────────────────────────────
     ctx.fillStyle = '#fdf8f3'
     ctx.fillRect(0, 0, W, H)
 
-    // Pola titik-titik dekoratif samar (tekstur)
     ctx.save()
     ctx.globalAlpha = 0.06
     ctx.fillStyle = '#5c3317'
@@ -205,7 +210,6 @@ async function downloadQR() {
     ctx.globalAlpha = 1
     ctx.restore()
 
-    // ── Header coklat ─────────────────────────────────────
     const headerH = 96
     const headerGrad = ctx.createLinearGradient(0, 0, W, headerH)
     headerGrad.addColorStop(0, '#3b1f0e')
@@ -214,7 +218,6 @@ async function downloadQR() {
     roundRect(ctx, 0, 0, W, headerH + 16, 0)
     ctx.fill()
 
-    // Garis aksen bawah header
     const accentGrad = ctx.createLinearGradient(0, 0, W, 0)
     accentGrad.addColorStop(0, '#c8a06a')
     accentGrad.addColorStop(0.5, '#e8c88a')
@@ -222,22 +225,18 @@ async function downloadQR() {
     ctx.fillStyle = accentGrad
     ctx.fillRect(0, headerH, W, 2.5)
 
-    // Logo QRIS di header (kiri)
     drawQrisLogo(ctx, 24, 36)
 
-    // Nama cafe (kanan header)
     ctx.fillStyle = '#e8c88a'
     ctx.font = 'bold 13px Georgia, serif'
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
-    // Truncate cafe name jika terlalu panjang
     const cafeName = props.transaction.cafe_name.toUpperCase()
     ctx.fillText(cafeName, W - 24, 46)
     ctx.fillStyle = 'rgba(255,255,255,0.55)'
     ctx.font = '12px Georgia, serif'
     ctx.fillText(`Meja ${props.transaction.table_name}`, W - 24, 66)
 
-    // ── Nominal ───────────────────────────────────────────
     ctx.textAlign = 'center'
     ctx.textBaseline = 'alphabetic'
 
@@ -249,13 +248,10 @@ async function downloadQR() {
     ctx.font = 'bold 40px Georgia, serif'
     ctx.fillText(`Rp ${formatRupiah(props.transaction.total_price)}`, W / 2, 178)
 
-    // Nama pelanggan
     ctx.fillStyle = '#8b6340'
     ctx.font = '13px Georgia, serif'
-    // add slight top padding to customer name
     ctx.fillText(`${props.transaction.cust_name || 'Pelanggan'}`, W / 2, 208)
 
-    // Divider tipis
     ctx.strokeStyle = 'rgba(139,99,64,0.2)'
     ctx.lineWidth = 1
     ctx.beginPath()
@@ -263,13 +259,11 @@ async function downloadQR() {
     ctx.lineTo(W - 40, 214)
     ctx.stroke()
 
-    // ── QR Card ───────────────────────────────────────────
     const cardX = 24
     const cardY = 226
     const cardW = W - 48
     const cardH = 340
 
-    // Shadow
     ctx.save()
     ctx.shadowColor = 'rgba(91,51,23,0.18)'
     ctx.shadowBlur = 24
@@ -279,33 +273,43 @@ async function downloadQR() {
     ctx.fill()
     ctx.restore()
 
-    // Card fill
     ctx.fillStyle = '#ffffff'
     roundRect(ctx, cardX, cardY, cardW, cardH, 18)
     ctx.fill()
 
-    // QR image — center dalam card
     const qrImg = await loadImage(qrDataUrl.value)
     const qrSize = 262
     const qrX = (W - qrSize) / 2
     const qrY = cardY + 24
     ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
 
-    // Label bawah dalam card
     ctx.fillStyle = '#b0916e'
     ctx.font = '11px Georgia, serif'
     ctx.textAlign = 'center'
     ctx.fillText('Scan dengan e-wallet atau mobile banking', W / 2, cardY + cardH - 16)
 
-    // ── Info transaksi ────────────────────────────────────
     const infoStartY = cardY + cardH + 24
     const colL = 40
     const colR = W - 40
     const lineH = 28
 
-    const rows: { label: string; value: string; bold?: boolean }[] = [
+    const rows: { label: string; value: string }[] = [
       { label: 'Subtotal', value: `Rp ${formatRupiah(props.transaction.price)}` },
       { label: 'Biaya Layanan', value: `Rp ${formatRupiah(props.transaction.fee)}` },
+      ...(props.transaction.expired_at
+        ? [
+            {
+              label: 'Berlaku hingga',
+              value: new Date(props.transaction.expired_at).toLocaleString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+            },
+          ]
+        : []),
     ]
 
     ctx.textBaseline = 'alphabetic'
@@ -323,7 +327,6 @@ async function downloadQR() {
       ctx.fillText(row.value, colR, y)
     })
 
-    // Divider sebelum total
     const divY = infoStartY + rows.length * lineH + 8
     ctx.strokeStyle = 'rgba(139,99,64,0.25)'
     ctx.lineWidth = 1
@@ -334,7 +337,6 @@ async function downloadQR() {
     ctx.stroke()
     ctx.setLineDash([])
 
-    // Total
     const totalY = divY + 28
     ctx.textAlign = 'left'
     ctx.fillStyle = '#5c3317'
@@ -346,7 +348,6 @@ async function downloadQR() {
     ctx.font = 'bold 16px Georgia, serif'
     ctx.fillText(`Rp ${formatRupiah(props.transaction.total_price)}`, colR, totalY)
 
-    // ── Footer ────────────────────────────────────────────
     const footerH = 52
     const footerY = H - footerH
 
@@ -375,7 +376,6 @@ async function downloadQR() {
     ctx.textBaseline = 'middle'
     ctx.fillText(`Diunduh pada ${formatted}`, W / 2, footerY + footerH / 2)
 
-    // ── Download ──────────────────────────────────────────
     const link = document.createElement('a')
     link.download = `QRIS-${props.transaction.transaction_id}.png`
     link.href = canvas.toDataURL('image/png')
@@ -389,10 +389,13 @@ onMounted(() => {
   generateQR()
   pollStatus()
   intervalId = setInterval(pollStatus, 3000)
+  updateCountdown()
+  countdownId = setInterval(updateCountdown, 1000)
 })
 
 onUnmounted(() => {
   stopPolling()
+  if (countdownId) clearInterval(countdownId)
 })
 </script>
 
@@ -432,6 +435,26 @@ onUnmounted(() => {
         >
           <i class="pi pi-spin pi-spinner text-primary text-2xl"></i>
         </div>
+      </div>
+
+      <!-- Expired Countdown -->
+      <div
+        v-if="transaction.expired_at && timeLeft"
+        class="flex items-center justify-center gap-2 mb-3"
+      >
+        <i
+          class="pi pi-clock text-xs"
+          :class="timeLeft === 'Kedaluwarsa' ? 'text-red-400' : 'text-text-light'"
+        ></i>
+        <span class="text-xs text-text-light">Berlaku hingga</span>
+        <span
+          class="text-xs font-bold tabular-nums px-2 py-0.5 rounded-full"
+          :class="
+            timeLeft === 'Kedaluwarsa' ? 'bg-red-50 text-red-500' : 'bg-primary/10 text-primary'
+          "
+        >
+          {{ timeLeft }}
+        </span>
       </div>
 
       <p class="text-xs text-text-light mb-4">
@@ -474,6 +497,23 @@ onUnmounted(() => {
         <span class="text-text-light">Biaya Layanan</span>
         <span class="font-medium text-text">Rp {{ formatRupiah(transaction.fee) }}</span>
       </div>
+
+      <!-- Expired At -->
+      <div v-if="transaction.expired_at" class="flex justify-between text-sm">
+        <span class="text-text-light">Berlaku hingga</span>
+        <span class="font-medium text-text">
+          {{
+            new Date(transaction.expired_at).toLocaleString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          }}
+        </span>
+      </div>
+
       <div class="flex justify-between text-sm pt-2 border-t border-secondary">
         <span class="font-bold text-text">Total</span>
         <span class="font-bold text-primary text-base">
