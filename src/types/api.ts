@@ -63,6 +63,7 @@ export interface Menu {
   status: string
   created_at: string
   updated_at: string
+  selectable_materials?: SelectableMaterial[]
 }
 
 export interface MenuCategory {
@@ -233,4 +234,28 @@ export interface LandingPageResponse {
   success: boolean
   message: string
   data: LandingPageData
+}
+
+export interface MaterialVariant {
+  id: number
+  material_id: number
+  name: string
+  stock: string
+  minimum_stock: string
+}
+
+export interface SelectableMaterial {
+  material_id: number
+  material_name: string
+  variants: MaterialVariant[]
+}
+
+export interface SelectedVariant {
+  material_id: number
+  variant_id: number
+}
+
+export interface CartItemVariant {
+  menu_id: number
+  selected_variants: SelectedVariant[]
 }

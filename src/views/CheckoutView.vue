@@ -127,6 +127,7 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
         menu_id: item.id,
         amount: item.quantity,
         description: item.description ?? null,
+        selected_variants: item.selected_variants ?? [],
       })),
     }
 

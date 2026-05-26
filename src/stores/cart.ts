@@ -1,7 +1,8 @@
+// stores/cart.ts — FULL FILE
+
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { watch } from 'vue'
-import type { Menu } from '@/types/api'
+import { ref, computed, watch } from 'vue'
+import type { Menu, SelectedVariant } from '@/types/api'
 import { checkAvailableMaterial, checkAvailableMaterialBulk } from '@/services/api'
 
 export interface CartItem {
@@ -11,17 +12,17 @@ export interface CartItem {
   image: string | null
   quantity: number
   description?: string | null
+  selected_variants?: SelectedVariant[] // TAMBAHAN
 }
 
-// Item yang sudah ada di open bill (dari server), read-only di cart
 export interface LockedCartItem {
-  id: number // transaction_detail.id
+  id: number
   menu_id: number
   name: string
   price: number
   quantity: number
   description: string | null
-  isLocked: true // penanda item dari server
+  isLocked: true
 }
 
 const CART_STORAGE_KEY = 'arletta-cafe-cart'
@@ -33,12 +34,11 @@ function loadCartFromStorage(): CartItem[] {
       const parsed = JSON.parse(data) as CartItem[]
       return parsed.map((it) => ({
         ...it,
-        description: (it as Partial<CartItem>).description ?? null,
+        description: it.description ?? null,
+        selected_variants: it.selected_variants ?? [],
       }))
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   return []
 }
 
@@ -47,47 +47,26 @@ function saveCartToStorage(items: CartItem[]) {
 }
 
 export const useCartStore = defineStore('cart', () => {
-  // Item yang baru ditambahkan user di sesi ini
   const items = ref<CartItem[]>(loadCartFromStorage())
-
-  // Item yang sudah ada di open bill aktif (dari server), untuk ditampilkan
   const lockedItems = ref<LockedCartItem[]>([])
-
-  // Flag: apakah sedang dalam mode open bill
   const isOpenBillMode = ref(false)
 
-  watch(
-    items,
-    (newItems) => {
-      saveCartToStorage(newItems)
-    },
-    { deep: true },
-  )
+  watch(items, (newItems) => saveCartToStorage(newItems), { deep: true })
 
-  // Getters
   const totalPrice = computed(() =>
     items.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
   )
-
   const totalItems = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
-
   const isEmpty = computed(() => items.value.length === 0)
-
-  // Total harga locked items (sudah dipesan sebelumnya)
   const lockedTotalPrice = computed(() =>
     lockedItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0),
   )
 
-  // Actions
   function setOpenBillMode(locked: LockedCartItem[]) {
     const wasAlreadyOpenBill = isOpenBillMode.value
     isOpenBillMode.value = true
     lockedItems.value = locked
-    // Reset cart hanya saat pertama kali masuk open bill,
-    // bukan saat re-enter (misal kembali dari CartView ke MenuView)
-    if (!wasAlreadyOpenBill) {
-      items.value = []
-    }
+    if (!wasAlreadyOpenBill) items.value = []
   }
 
   function clearOpenBillMode() {
@@ -95,37 +74,77 @@ export const useCartStore = defineStore('cart', () => {
     lockedItems.value = []
   }
 
-  function addToCart(menuItem: Menu) {
-    const existing = items.value.find((item) => item.id === menuItem.id)
-    if (existing) {
-      existing.quantity++
+  // MODIFIKASI: addToCart dengan support selected_variants
+  function addToCart(menuItem: Menu, selectedVariants: SelectedVariant[] = []) {
+    // Jika ada selectable material, setiap pilihan variant = item terpisah
+    // (karena user bisa pilih Temanggung vs Kalimantan → produk berbeda secara stok)
+    if (selectedVariants.length > 0) {
+      // Cari item yang sama persis (menu + variant combination)
+      const existing = items.value.find(
+        (item) =>
+          item.id === menuItem.id &&
+          JSON.stringify(item.selected_variants) === JSON.stringify(selectedVariants),
+      )
+      if (existing) {
+        existing.quantity++
+      } else {
+        items.value.push({
+          id: menuItem.id,
+          name: menuItem.name,
+          price: parseFloat(menuItem.price),
+          image: menuItem.img_url,
+          quantity: 1,
+          description: null,
+          selected_variants: selectedVariants,
+        })
+      }
     } else {
-      items.value.push({
-        id: menuItem.id,
-        name: menuItem.name,
-        price: parseFloat(menuItem.price),
-        image: menuItem.img_url,
-        quantity: 1,
-        description: null,
-      })
+      const existing = items.value.find(
+        (item) => item.id === menuItem.id && (!item.selected_variants || item.selected_variants.length === 0),
+      )
+      if (existing) {
+        existing.quantity++
+      } else {
+        items.value.push({
+          id: menuItem.id,
+          name: menuItem.name,
+          price: parseFloat(menuItem.price),
+          image: menuItem.img_url,
+          quantity: 1,
+          description: null,
+          selected_variants: [],
+        })
+      }
     }
   }
 
-  function removeFromCart(itemId: number) {
-    const index = items.value.findIndex((item) => item.id === itemId)
+  function removeFromCart(itemId: number, selectedVariants: SelectedVariant[] = []) {
+    const index = items.value.findIndex(
+      (item) =>
+        item.id === itemId &&
+        JSON.stringify(item.selected_variants ?? []) === JSON.stringify(selectedVariants),
+    )
     if (index !== -1) items.value.splice(index, 1)
   }
 
-  function increaseQty(itemId: number) {
-    const item = items.value.find((item) => item.id === itemId)
+  function increaseQty(itemId: number, selectedVariants: SelectedVariant[] = []) {
+    const item = items.value.find(
+      (i) =>
+        i.id === itemId &&
+        JSON.stringify(i.selected_variants ?? []) === JSON.stringify(selectedVariants),
+    )
     if (item) item.quantity++
   }
 
-  function decreaseQty(itemId: number) {
-    const item = items.value.find((item) => item.id === itemId)
+  function decreaseQty(itemId: number, selectedVariants: SelectedVariant[] = []) {
+    const item = items.value.find(
+      (i) =>
+        i.id === itemId &&
+        JSON.stringify(i.selected_variants ?? []) === JSON.stringify(selectedVariants),
+    )
     if (item) {
       if (item.quantity > 1) item.quantity--
-      else removeFromCart(itemId)
+      else removeFromCart(itemId, selectedVariants)
     }
   }
 
@@ -134,32 +153,71 @@ export const useCartStore = defineStore('cart', () => {
     if (item) item.description = desc
   }
 
-  async function checkAndAdd(menuItem: Menu): Promise<{ success: boolean; message: string }> {
-    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
-    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: currentQty + 1 })
+  async function checkAndAdd(
+    menuItem: Menu,
+    selectedVariants: SelectedVariant[] = [],
+  ): Promise<{ success: boolean; message: string }> {
+    const currentQty =
+      items.value.find(
+        (i) =>
+          i.id === menuItem.id &&
+          JSON.stringify(i.selected_variants ?? []) === JSON.stringify(selectedVariants),
+      )?.quantity ?? 0
+
+    const result = await checkAvailableMaterial({
+      menu_id: menuItem.id,
+      quantity: currentQty + 1,
+      selected_variants: selectedVariants,
+    })
     if (!result.success) return { success: false, message: result.message }
-    addToCart(menuItem)
+    addToCart(menuItem, selectedVariants)
     return { success: true, message: result.message }
   }
 
-  async function checkAndIncrease(menuItem: Menu): Promise<{ success: boolean; message: string }> {
-    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
-    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: currentQty + 1 })
+  async function checkAndIncrease(
+    menuItem: Menu,
+    selectedVariants: SelectedVariant[] = [],
+  ): Promise<{ success: boolean; message: string }> {
+    const currentQty =
+      items.value.find(
+        (i) =>
+          i.id === menuItem.id &&
+          JSON.stringify(i.selected_variants ?? []) === JSON.stringify(selectedVariants),
+      )?.quantity ?? 0
+
+    const result = await checkAvailableMaterial({
+      menu_id: menuItem.id,
+      quantity: currentQty + 1,
+      selected_variants: selectedVariants,
+    })
     if (!result.success) return { success: false, message: result.message }
-    increaseQty(menuItem.id)
+    increaseQty(menuItem.id, selectedVariants)
     return { success: true, message: result.message }
   }
 
-  async function checkAndDecrease(menuItem: Menu): Promise<{ success: boolean; message: string }> {
-    const currentQty = items.value.find((i) => i.id === menuItem.id)?.quantity ?? 0
+  async function checkAndDecrease(
+    menuItem: Menu,
+    selectedVariants: SelectedVariant[] = [],
+  ): Promise<{ success: boolean; message: string }> {
+    const currentQty =
+      items.value.find(
+        (i) =>
+          i.id === menuItem.id &&
+          JSON.stringify(i.selected_variants ?? []) === JSON.stringify(selectedVariants),
+      )?.quantity ?? 0
+
     const nextQty = currentQty - 1
     if (nextQty <= 0) {
-      removeFromCart(menuItem.id)
+      removeFromCart(menuItem.id, selectedVariants)
       return { success: true, message: '' }
     }
-    const result = await checkAvailableMaterial({ menu_id: menuItem.id, quantity: nextQty })
+    const result = await checkAvailableMaterial({
+      menu_id: menuItem.id,
+      quantity: nextQty,
+      selected_variants: selectedVariants,
+    })
     if (!result.success) return { success: false, message: result.message }
-    decreaseQty(menuItem.id)
+    decreaseQty(menuItem.id, selectedVariants)
     return { success: true, message: result.message }
   }
 
@@ -171,62 +229,53 @@ export const useCartStore = defineStore('cart', () => {
   async function checkBulk(): Promise<{ success: boolean; message: string }> {
     if (items.value.length === 0) return { success: true, message: '' }
     const result = await checkAvailableMaterialBulk({
-      items: items.value.map((item) => ({ menu_id: item.id, quantity: item.quantity })),
+      items: items.value.map((item) => ({
+        menu_id: item.id,
+        quantity: item.quantity,
+        selected_variants: item.selected_variants ?? [],
+      })),
     })
     return { success: result.success, message: result.message }
   }
 
-  async function checkAndIncreaseById(
-    itemId: number,
-  ): Promise<{ success: boolean; message: string }> {
+  // Legacy methods untuk backward compat (CartView)
+  async function checkAndIncreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
     const result = await checkAvailableMaterial({
       menu_id: itemId,
       quantity: cartItem.quantity + 1,
+      selected_variants: cartItem.selected_variants ?? [],
     })
     if (!result.success) return { success: false, message: result.message }
-    increaseQty(itemId)
+    increaseQty(itemId, cartItem.selected_variants ?? [])
     return { success: true, message: result.message }
   }
 
-  async function checkAndDecreaseById(
-    itemId: number,
-  ): Promise<{ success: boolean; message: string }> {
+  async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
     const nextQty = cartItem.quantity - 1
     if (nextQty <= 0) {
-      removeFromCart(itemId)
+      removeFromCart(itemId, cartItem.selected_variants ?? [])
       return { success: true, message: '' }
     }
-    const result = await checkAvailableMaterial({ menu_id: itemId, quantity: nextQty })
+    const result = await checkAvailableMaterial({
+      menu_id: itemId,
+      quantity: nextQty,
+      selected_variants: cartItem.selected_variants ?? [],
+    })
     if (!result.success) return { success: false, message: result.message }
-    decreaseQty(itemId)
+    decreaseQty(itemId, cartItem.selected_variants ?? [])
     return { success: true, message: result.message }
   }
 
   return {
-    items,
-    lockedItems,
-    isOpenBillMode,
-    totalPrice,
-    totalItems,
-    isEmpty,
-    lockedTotalPrice,
-    addToCart,
-    removeFromCart,
-    increaseQty,
-    decreaseQty,
-    checkAndAdd,
-    checkAndIncrease,
-    checkAndDecrease,
-    checkBulk,
-    clearCart,
-    checkAndIncreaseById,
-    checkAndDecreaseById,
-    setItemDescription,
-    setOpenBillMode,
-    clearOpenBillMode,
+    items, lockedItems, isOpenBillMode,
+    totalPrice, totalItems, isEmpty, lockedTotalPrice,
+    addToCart, removeFromCart, increaseQty, decreaseQty,
+    checkAndAdd, checkAndIncrease, checkAndDecrease, checkBulk, clearCart,
+    checkAndIncreaseById, checkAndDecreaseById,
+    setItemDescription, setOpenBillMode, clearOpenBillMode,
   }
 })
