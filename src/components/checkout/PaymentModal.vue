@@ -44,7 +44,6 @@ const emit = defineEmits<{
           </button>
 
           <!-- QRIS -->
-          <!--
           <button
             @click="emit('select', 'qr')"
             :disabled="isLoading"
@@ -62,7 +61,6 @@ const emit = defineEmits<{
             <i v-if="isLoading" class="pi pi-spinner pi-spin text-primary ml-auto"></i>
             <i v-else class="pi pi-chevron-right text-text-light ml-auto text-xs"></i>
           </button>
-          -->
         </div>
 
         <button

@@ -8,6 +8,7 @@ import { makeTransaction, checkPromoCode, ApiError } from '@/services/api'
 import type { TransactionResponse, PromoData } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
+import QrisPaymentStatus from '@/components/checkout/QrisPaymentStatus.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,6 +33,7 @@ const isCustomerValid = computed(() => customerName.value.trim().length > 0)
 const showPaymentModal = ref(false)
 const transactionData = ref<TransactionResponse | null>(null)
 const showManualPayment = ref(false)
+const showQrisPayment = ref(false)
 
 // Error state
 interface TransactionError {
@@ -134,7 +136,8 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
     showPaymentModal.value = false
 
     if (normalizedType === 'qris') {
-      loadMidtransSnap(res.data.snap_token!)
+      showQrisPayment.value = true
+      savedCustomer.value = customerName.value.trim()
     } else {
       showManualPayment.value = true
       savedCustomer.value = customerName.value.trim()
@@ -170,25 +173,11 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
   }
 }
 
-function loadMidtransSnap(snapToken: string) {
-  const script = document.createElement('script')
-  script.src = 'https://app.midtrans.com/snap/snap.js'
-  script.setAttribute('data-client-key', import.meta.env.VITE_MIDTRANS_CLIENT_KEY as string)
-  script.onload = () => {
-    // @ts-expect-error window.snap is not defined on the Window type
-    window.snap.pay(snapToken, {
-      onSuccess: () => {
-        savedCustomer.value = customerName.value.trim()
-        cartStore.clearCart()
-        orderNumber.value = generateOrderNumber()
-        orderSuccess.value = true
-      },
-      onPending: () => {},
-      onError: () => {},
-      onClose: () => {},
-    })
-  }
-  document.body.appendChild(script)
+function handleQrisSuccess() {
+  cartStore.clearCart()
+  orderNumber.value = generateOrderNumber()
+  orderSuccess.value = true
+  showQrisPayment.value = false
 }
 
 function handleManualSuccess() {
@@ -255,6 +244,11 @@ function backToMenu() {
           Kembali ke Menu
         </button>
       </div>
+    </div>
+
+    <!-- QRIS Payment Status -->
+    <div v-else-if="showQrisPayment && transactionData" class="max-w-3xl mx-auto px-4 py-6">
+      <QrisPaymentStatus :transaction="transactionData" @success="handleQrisSuccess" />
     </div>
 
     <!-- Manual Payment Status -->
@@ -496,7 +490,7 @@ function backToMenu() {
 
     <!-- Bottom Order Button -->
     <div
-      v-if="!cartStore.isEmpty && !orderSuccess && !showManualPayment"
+      v-if="!cartStore.isEmpty && !orderSuccess && !showManualPayment && !showQrisPayment"
       class="fixed bottom-0 left-0 right-0 bg-white border-t border-secondary shadow-[0_-4px_20px_rgba(0,0,0,0.08)] p-4 z-40"
     >
       <div class="max-w-3xl mx-auto">
