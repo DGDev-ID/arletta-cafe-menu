@@ -362,13 +362,14 @@ function backToMenu() {
                   <p class="text-sm font-medium text-text truncate">{{ item.name }}</p>
 
                   <!-- Variant badges — tampil jika ada pilihan biji kopi / bahan selectable -->
-                  <div v-if="item.selected_variants?.length" class="flex flex-wrap gap-1 mt-1">
+                  <div v-if="item.selected_variants?.length" class="flex flex-wrap gap-1 mt-1.5">
                     <span
                       v-for="sv in item.selected_variants"
                       :key="sv.variant_id"
-                      class="inline-flex items-center gap-1 text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                      class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide bg-gradient-to-r from-primary/15 to-primary/5 text-primary border border-primary/20 px-2 py-0.5 rounded-full shadow-sm backdrop-blur-sm"
+                      style="letter-spacing: 0.03em"
                     >
-                      <i class="pi pi-circle-fill text-[5px]"></i>
+                      <span class="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0"></span>
                       {{ sv.variant_name || `Variant #${sv.variant_id}` }}
                     </span>
                   </div>

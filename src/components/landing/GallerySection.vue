@@ -55,10 +55,7 @@ defineProps<{
         </div>
 
         <!-- Empty state -->
-        <div
-          v-if="gallery.length === 0"
-          class="col-span-4 py-16 text-center text-brown-400"
-        >
+        <div v-if="gallery.length === 0" class="col-span-4 py-16 text-center text-brown-400">
           Belum ada foto galeri.
         </div>
       </div>

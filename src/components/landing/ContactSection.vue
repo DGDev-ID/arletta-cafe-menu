@@ -3,7 +3,9 @@ const contactInfo = [
   {
     icon: 'pi pi-map-marker',
     title: 'Visit Us',
-    lines: ['Gang Kelapa Gading RT 02 / RW 01, Kel. Wates, Kec. Ngaliyan Semarang Barat, Jawa Tengah'],
+    lines: [
+      'Gang Kelapa Gading RT 02 / RW 01, Kel. Wates, Kec. Ngaliyan Semarang Barat, Jawa Tengah',
+    ],
   },
   {
     icon: 'pi pi-phone',

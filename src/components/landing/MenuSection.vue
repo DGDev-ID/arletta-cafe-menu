@@ -24,11 +24,15 @@ const parentCategories = computed(() => {
 const activeCategory = ref<number | null>(null)
 
 // Set default ke kategori pertama saat data tersedia
-watch(parentCategories, (cats) => {
-  if (cats.length > 0 && activeCategory.value === null) {
-    activeCategory.value = cats[0]!.id
-  }
-}, { immediate: true })
+watch(
+  parentCategories,
+  (cats) => {
+    if (cats.length > 0 && activeCategory.value === null) {
+      activeCategory.value = cats[0]!.id
+    }
+  },
+  { immediate: true },
+)
 
 const filteredItems = computed(() => {
   if (activeCategory.value === null) return props.menus
@@ -36,8 +40,7 @@ const filteredItems = computed(() => {
     if (!m.category) return false
     // Cocok jika kategori menu adalah parent yang dipilih,
     // atau kategori menu adalah child dari parent yang dipilih
-    return m.category.id === activeCategory.value ||
-      m.category.parent_id === activeCategory.value
+    return m.category.id === activeCategory.value || m.category.parent_id === activeCategory.value
   })
 })
 
@@ -125,7 +128,10 @@ function formatPrice(price: string) {
               <!-- Image -->
               <div class="relative shrink-0 overflow-hidden rounded-xl">
                 <img
-                  :src="item.img_url ?? 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80'"
+                  :src="
+                    item.img_url ??
+                    'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80'
+                  "
                   :alt="item.name"
                   class="h-28 w-28 object-cover transition-transform duration-500 group-hover:scale-105 md:h-32 md:w-32"
                 />

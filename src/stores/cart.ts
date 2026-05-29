@@ -38,7 +38,9 @@ function loadCartFromStorage(): CartItem[] {
         selected_variants: it.selected_variants ?? [],
       }))
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return []
 }
 
@@ -100,7 +102,9 @@ export const useCartStore = defineStore('cart', () => {
       }
     } else {
       const existing = items.value.find(
-        (item) => item.id === menuItem.id && (!item.selected_variants || item.selected_variants.length === 0),
+        (item) =>
+          item.id === menuItem.id &&
+          (!item.selected_variants || item.selected_variants.length === 0),
       )
       if (existing) {
         existing.quantity++
@@ -239,7 +243,9 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   // Legacy methods untuk backward compat (CartView)
-  async function checkAndIncreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  async function checkAndIncreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
     const result = await checkAvailableMaterial({
@@ -252,7 +258,9 @@ export const useCartStore = defineStore('cart', () => {
     return { success: true, message: result.message }
   }
 
-  async function checkAndDecreaseById(itemId: number): Promise<{ success: boolean; message: string }> {
+  async function checkAndDecreaseById(
+    itemId: number,
+  ): Promise<{ success: boolean; message: string }> {
     const cartItem = items.value.find((i) => i.id === itemId)
     if (!cartItem) return { success: false, message: 'Item tidak ditemukan' }
     const nextQty = cartItem.quantity - 1
@@ -271,11 +279,26 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   return {
-    items, lockedItems, isOpenBillMode,
-    totalPrice, totalItems, isEmpty, lockedTotalPrice,
-    addToCart, removeFromCart, increaseQty, decreaseQty,
-    checkAndAdd, checkAndIncrease, checkAndDecrease, checkBulk, clearCart,
-    checkAndIncreaseById, checkAndDecreaseById,
-    setItemDescription, setOpenBillMode, clearOpenBillMode,
+    items,
+    lockedItems,
+    isOpenBillMode,
+    totalPrice,
+    totalItems,
+    isEmpty,
+    lockedTotalPrice,
+    addToCart,
+    removeFromCart,
+    increaseQty,
+    decreaseQty,
+    checkAndAdd,
+    checkAndIncrease,
+    checkAndDecrease,
+    checkBulk,
+    clearCart,
+    checkAndIncreaseById,
+    checkAndDecreaseById,
+    setItemDescription,
+    setOpenBillMode,
+    clearOpenBillMode,
   }
 })

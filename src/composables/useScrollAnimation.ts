@@ -5,7 +5,9 @@ export function useScrollAnimation() {
   let mutationObserver: MutationObserver | null = null
 
   function observeElements() {
-    const elements = document.querySelectorAll('.fade-in:not(.visible), .fade-in-left:not(.visible), .fade-in-right:not(.visible)')
+    const elements = document.querySelectorAll(
+      '.fade-in:not(.visible), .fade-in-left:not(.visible), .fade-in-right:not(.visible)',
+    )
     elements.forEach((el) => observer?.observe(el))
   }
 
