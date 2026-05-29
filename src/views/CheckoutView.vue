@@ -360,7 +360,20 @@ function backToMenu() {
                 />
                 <div class="min-w-0">
                   <p class="text-sm font-medium text-text truncate">{{ item.name }}</p>
-                  <p class="text-xs text-text-light">
+
+                  <!-- Variant badges — tampil jika ada pilihan biji kopi / bahan selectable -->
+                  <div v-if="item.selected_variants?.length" class="flex flex-wrap gap-1 mt-1">
+                    <span
+                      v-for="sv in item.selected_variants"
+                      :key="sv.variant_id"
+                      class="inline-flex items-center gap-1 text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                    >
+                      <i class="pi pi-circle-fill text-[5px]"></i>
+                      {{ sv.variant_name || `Variant #${sv.variant_id}` }}
+                    </span>
+                  </div>
+
+                  <p class="text-xs text-text-light mt-0.5">
                     {{ item.quantity }}x @ Rp {{ item.price.toLocaleString('id-ID') }}
                   </p>
                   <p v-if="item.description" class="text-xs text-text-light mt-1">

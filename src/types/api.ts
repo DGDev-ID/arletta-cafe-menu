@@ -253,6 +253,8 @@ export interface SelectableMaterial {
 export interface SelectedVariant {
   material_id: number
   variant_id: number
+  material_name?: string // nama bahan, cth: "Biji Kopi"
+  variant_name?: string // nama pilihan, cth: "Temanggung"
 }
 
 export interface CartItemVariant {

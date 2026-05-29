@@ -68,6 +68,19 @@ async function handleDecrease(itemId: number) {
     <!-- Info -->
     <div class="flex-1 min-w-0">
       <h4 class="text-sm font-semibold text-text truncate">{{ item.name }}</h4>
+
+      <!-- Variant badges — tampil jika ada pilihan biji kopi / bahan selectable -->
+      <div v-if="item.selected_variants?.length" class="flex flex-wrap gap-1 mt-1">
+        <span
+          v-for="sv in item.selected_variants"
+          :key="sv.variant_id"
+          class="inline-flex items-center gap-1 text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+        >
+          <i class="pi pi-circle-fill text-[5px]"></i>
+          {{ sv.variant_name || `Variant #${sv.variant_id}` }}
+        </span>
+      </div>
+
       <p class="text-sm font-bold text-primary mt-0.5">
         Rp {{ item.price.toLocaleString('id-ID') }}
       </p>

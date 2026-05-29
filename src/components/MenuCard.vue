@@ -36,10 +36,16 @@ const allVariantsSelected = computed(() => {
 })
 
 function buildSelectedVariantsPayload(): SelectedVariant[] {
-  return Object.entries(selectedVariants.value).map(([materialId, variantId]) => ({
-    material_id: Number(materialId),
-    variant_id: variantId,
-  }))
+  return Object.entries(selectedVariants.value).map(([materialId, variantId]) => {
+    const sm = props.item.selectable_materials?.find((s) => s.material_id === Number(materialId))
+    const variant = sm?.variants.find((v) => v.id === variantId)
+    return {
+      material_id: Number(materialId),
+      variant_id: variantId,
+      material_name: sm?.material_name,
+      variant_name: variant?.name,
+    }
+  })
 }
 
 function openVariantModal() {
