@@ -61,6 +61,7 @@ export interface Menu {
   img_url: string | null
   price: string
   status: string
+  is_combo?: boolean
   created_at: string
   updated_at: string
   selectable_materials?: SelectableMaterial[]

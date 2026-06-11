@@ -94,13 +94,15 @@ async function pollStatus() {
   try {
     const res = await getTransactionStatus(props.transaction.transaction_id)
     if (res.success) {
-      status.value = res.data as PaymentStatus
-      if (res.data === 'success') {
+      if (res.data === 'success' || res.data === 'in_order') {
+        status.value = 'success'
         stopPolling()
         setTimeout(() => emit('success'), 1500)
-      }
-      if (res.data === 'failed') {
-        stopPolling()
+      } else {
+        status.value = res.data as PaymentStatus
+        if (res.data === 'failed') {
+          stopPolling()
+        }
       }
     }
   } catch {

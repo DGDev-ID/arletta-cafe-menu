@@ -401,7 +401,7 @@ function backToMenu() {
               v-model="promoInput"
               type="text"
               placeholder="Masukkan kode promo"
-              class="flex-1 bg-secondary-light rounded-xl px-4 py-2.5 text-sm text-text placeholder:text-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/30 border border-transparent focus:border-primary/40 transition uppercase"
+              class="flex-1 min-w-0 bg-secondary-light rounded-xl px-4 py-2.5 text-sm text-text placeholder:text-text-light/60 focus:outline-none focus:ring-2 focus:ring-primary/30 border border-transparent focus:border-primary/40 transition uppercase"
               :disabled="isCheckingPromo"
               @keyup.enter="handleCheckPromo"
             />
