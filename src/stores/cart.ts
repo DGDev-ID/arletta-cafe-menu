@@ -2,7 +2,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-import type { Menu, SelectedVariant } from '@/types/api'
+import type { Menu, SelectedVariant, SelectedComboOption } from '@/types/api'
 import { checkAvailableMaterial, checkAvailableMaterialBulk } from '@/services/api'
 
 export interface CartItem {
@@ -13,6 +13,7 @@ export interface CartItem {
   quantity: number
   description?: string | null
   selected_variants?: SelectedVariant[] // TAMBAHAN
+  selected_combo_options?: SelectedComboOption[] // COMBO PILIHAN
 }
 
 export interface LockedCartItem {
@@ -36,6 +37,7 @@ function loadCartFromStorage(): CartItem[] {
         ...it,
         description: it.description ?? null,
         selected_variants: it.selected_variants ?? [],
+        selected_combo_options: it.selected_combo_options ?? [],
       }))
     }
   } catch {
@@ -76,49 +78,29 @@ export const useCartStore = defineStore('cart', () => {
     lockedItems.value = []
   }
 
-  // MODIFIKASI: addToCart dengan support selected_variants
-  function addToCart(menuItem: Menu, selectedVariants: SelectedVariant[] = []) {
-    // Jika ada selectable material, setiap pilihan variant = item terpisah
-    // (karena user bisa pilih Temanggung vs Kalimantan → produk berbeda secara stok)
-    if (selectedVariants.length > 0) {
-      // Cari item yang sama persis (menu + variant combination)
-      const existing = items.value.find(
-        (item) =>
-          item.id === menuItem.id &&
-          JSON.stringify(item.selected_variants) === JSON.stringify(selectedVariants),
-      )
-      if (existing) {
-        existing.quantity++
-      } else {
-        items.value.push({
-          id: menuItem.id,
-          name: menuItem.name,
-          price: parseFloat(menuItem.price),
-          image: menuItem.img_url,
-          quantity: 1,
-          description: null,
-          selected_variants: selectedVariants,
-        })
-      }
+  // MODIFIKASI: addToCart dengan support selected_variants dan selected_combo_options
+  function addToCart(menuItem: Menu, selectedVariants: SelectedVariant[] = [], selectedComboOptions: SelectedComboOption[] = []) {
+    // Helper untuk identity matching
+    const matchIdentity = (item: CartItem) => {
+      const variantsMatch = JSON.stringify(item.selected_variants ?? []) === JSON.stringify(selectedVariants)
+      const comboMatch = JSON.stringify(item.selected_combo_options ?? []) === JSON.stringify(selectedComboOptions)
+      return item.id === menuItem.id && variantsMatch && comboMatch
+    }
+
+    const existing = items.value.find(matchIdentity)
+    if (existing) {
+      existing.quantity++
     } else {
-      const existing = items.value.find(
-        (item) =>
-          item.id === menuItem.id &&
-          (!item.selected_variants || item.selected_variants.length === 0),
-      )
-      if (existing) {
-        existing.quantity++
-      } else {
-        items.value.push({
-          id: menuItem.id,
-          name: menuItem.name,
-          price: parseFloat(menuItem.price),
-          image: menuItem.img_url,
-          quantity: 1,
-          description: null,
-          selected_variants: [],
-        })
-      }
+      items.value.push({
+        id: menuItem.id,
+        name: menuItem.name,
+        price: parseFloat(menuItem.price),
+        image: menuItem.img_url,
+        quantity: 1,
+        description: null,
+        selected_variants: selectedVariants,
+        selected_combo_options: selectedComboOptions,
+      })
     }
   }
 

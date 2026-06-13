@@ -62,9 +62,23 @@ export interface Menu {
   price: string
   status: string
   is_combo?: boolean
+  combo_groups?: ComboGroup[]
   created_at: string
   updated_at: string
   selectable_materials?: SelectableMaterial[]
+}
+
+export interface ComboGroup {
+  id: number
+  label: string
+  options: ComboGroupOption[]
+}
+
+export interface ComboGroupOption {
+  menu_id: number
+  name: string
+  img_url: string | null
+  amount: number
 }
 
 export interface MenuCategory {
@@ -100,7 +114,15 @@ export interface MakeTransactionRequest {
     menu_id: number
     amount: number
     description: string | null
+    selected_combo_options?: SelectedComboOption[]
   }[]
+}
+
+export interface SelectedComboOption {
+  group_id: number
+  menu_id: number
+  group_label?: string
+  menu_name?: string
 }
 
 export interface TransactionDetail {

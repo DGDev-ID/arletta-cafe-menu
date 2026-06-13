@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Menu, SelectedVariant } from '@/types/api'
+import type { Menu, SelectedVariant, SelectedComboOption } from '@/types/api'
 import { useCartStore } from '@/stores/cart'
 import { useToast } from 'primevue/usetoast'
 
@@ -14,16 +14,24 @@ const isLoading = ref(false)
 const showVariantModal = ref(false)
 const selectedVariants = ref<Record<number, number>>({}) // material_id -> variant_id
 
+// Combo group selection state
+const showComboModal = ref(false)
+const selectedComboOptions = ref<Record<number, number>>({}) // group_id -> menu_id
+
 const price = computed(() => parseFloat(props.item.price))
 const hasSelectableMaterials = computed(() => (props.item.selectable_materials?.length ?? 0) > 0)
+const hasComboGroups = computed(() => props.item.is_combo && (props.item.combo_groups?.length ?? 0) > 0)
 
-// Cek apakah item ini (tanpa variant, untuk menu normal) ada di cart
+// Cek apakah item ini (tanpa variant/combo, untuk menu normal) ada di cart
 const cartItem = computed(() =>
   cartStore.items.find(
-    (ci) => ci.id === props.item.id && (!ci.selected_variants || ci.selected_variants.length === 0),
+    (ci) =>
+      ci.id === props.item.id &&
+      (!ci.selected_variants || ci.selected_variants.length === 0) &&
+      (!ci.selected_combo_options || ci.selected_combo_options.length === 0),
   ),
 )
-const inCart = computed(() => !hasSelectableMaterials.value && !!cartItem.value)
+const inCart = computed(() => !hasSelectableMaterials.value && !hasComboGroups.value && !!cartItem.value)
 const quantity = computed(() => cartItem.value?.quantity ?? 0)
 
 const placeholderImage =
@@ -33,6 +41,12 @@ const placeholderImage =
 const allVariantsSelected = computed(() => {
   if (!props.item.selectable_materials) return true
   return props.item.selectable_materials.every((sm) => selectedVariants.value[sm.material_id])
+})
+
+// Validasi: semua combo group sudah dipilih
+const allComboGroupsSelected = computed(() => {
+  if (!props.item.combo_groups) return true
+  return props.item.combo_groups.every((g) => selectedComboOptions.value[g.id])
 })
 
 function buildSelectedVariantsPayload(): SelectedVariant[] {
@@ -48,6 +62,19 @@ function buildSelectedVariantsPayload(): SelectedVariant[] {
   })
 }
 
+function buildSelectedComboOptionsPayload(): SelectedComboOption[] {
+  return Object.entries(selectedComboOptions.value).map(([groupId, menuId]) => {
+    const group = props.item.combo_groups?.find((g) => g.id === Number(groupId))
+    const option = group?.options.find((o) => o.menu_id === menuId)
+    return {
+      group_id: Number(groupId),
+      menu_id: menuId,
+      group_label: group?.label,
+      menu_name: option?.name,
+    }
+  })
+}
+
 function openVariantModal() {
   selectedVariants.value = {}
   showVariantModal.value = true
@@ -56,6 +83,16 @@ function openVariantModal() {
 function closeVariantModal() {
   showVariantModal.value = false
   selectedVariants.value = {}
+}
+
+function openComboModal() {
+  selectedComboOptions.value = {}
+  showComboModal.value = true
+}
+
+function closeComboModal() {
+  showComboModal.value = false
+  selectedComboOptions.value = {}
 }
 
 async function confirmVariantAndAdd() {
@@ -92,8 +129,37 @@ async function confirmVariantAndAdd() {
   }
 }
 
+async function confirmComboAndAdd() {
+  if (!allComboGroupsSelected.value) return
+  isLoading.value = true
+  showComboModal.value = false
+  try {
+    const comboPayload = buildSelectedComboOptionsPayload()
+    cartStore.addToCart(props.item, [], comboPayload)
+    toast.add({
+      severity: 'success',
+      summary: 'Ditambahkan!',
+      detail: `${props.item.name} ditambahkan ke keranjang`,
+      life: 2000,
+    })
+  } catch {
+    toast.add({
+      severity: 'error',
+      summary: 'Gagal',
+      detail: 'Terjadi kesalahan, coba lagi',
+      life: 3000,
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
+
 async function handleAdd() {
   if (isLoading.value) return
+  if (hasComboGroups.value) {
+    openComboModal()
+    return
+  }
   if (hasSelectableMaterials.value) {
     openVariantModal()
     return
@@ -214,8 +280,8 @@ async function handleDecrease() {
           Rp {{ price.toLocaleString('id-ID') }}
         </span>
 
-        <!-- Quantity controls — hanya untuk menu normal (non-selectable) -->
-        <div v-if="inCart && !hasSelectableMaterials" class="flex items-center gap-1.5">
+        <!-- Quantity controls — hanya untuk menu normal (non-selectable, non-combo) -->
+        <div v-if="inCart && !hasSelectableMaterials && !hasComboGroups" class="flex items-center gap-1.5">
           <button
             @click="handleDecrease"
             :disabled="isLoading"
@@ -248,10 +314,11 @@ async function handleDecrease() {
         >
           <i v-if="!isLoading" class="pi pi-plus text-xs"></i>
           <i v-else class="pi pi-spinner pi-spin text-xs"></i>
-          {{ isLoading ? 'Checking...' : hasSelectableMaterials ? 'Pilih & Tambah' : 'Tambah' }}
+          {{ isLoading ? 'Checking...' : hasComboGroups ? 'Pilih Paket' : hasSelectableMaterials ? 'Pilih & Tambah' : 'Tambah' }}
         </button>
       </div>
     </div>
+
     <!-- Variant Selection Modal -->
     <Teleport to="body">
       <Transition name="modal-fade">
@@ -341,6 +408,108 @@ async function handleDecrease() {
                   @click="confirmVariantAndAdd"
                   :disabled="!allVariantsSelected || isLoading"
                   class="w-full sm:flex-1 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  <i v-if="isLoading" class="pi pi-spin pi-spinner text-xs"></i>
+                  <i v-else class="pi pi-shopping-cart text-xs"></i>
+                  Tambah ke Keranjang
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Combo Group Selection Modal -->
+    <Teleport to="body">
+      <Transition name="modal-fade">
+        <div
+          v-if="showComboModal"
+          class="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+          @click.self="closeComboModal"
+        >
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeComboModal" />
+          <div
+            class="relative w-full sm:max-w-md bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
+          >
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-1 sm:hidden">
+              <div class="w-10 h-1 rounded-full bg-secondary" />
+            </div>
+
+            <div class="px-6 pt-4 pb-8">
+              <!-- Header -->
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="text-lg font-bold text-text">{{ item.name }}</h3>
+                  <p class="text-sm text-text-light">Pilih isi paket combo kamu</p>
+                </div>
+                <button
+                  @click="closeComboModal"
+                  class="w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-accent hover:text-white text-text-light transition-colors"
+                >
+                  <i class="pi pi-times text-xs"></i>
+                </button>
+              </div>
+
+              <!-- Combo Groups -->
+              <div class="space-y-5 max-h-80 overflow-y-auto pr-1">
+                <div v-for="group in item.combo_groups" :key="group.id">
+                  <p class="text-sm font-semibold text-text mb-2">
+                    {{ group.label }}
+                    <span class="text-red-500">*</span>
+                  </p>
+                  <div class="grid grid-cols-1 gap-2">
+                    <label
+                      v-for="option in group.options"
+                      :key="option.menu_id"
+                      :class="[
+                        'flex items-center gap-3 rounded-xl border-2 px-4 py-3 cursor-pointer transition-all duration-150',
+                        selectedComboOptions[group.id] === option.menu_id
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-secondary hover:border-amber-400/50',
+                      ]"
+                    >
+                      <input
+                        type="radio"
+                        :name="`combo-group-${group.id}`"
+                        :value="option.menu_id"
+                        v-model="selectedComboOptions[group.id]"
+                        class="accent-amber-500"
+                      />
+                      <div class="flex items-center gap-3 flex-1">
+                        <img
+                          v-if="option.img_url"
+                          :src="option.img_url"
+                          :alt="option.name"
+                          class="w-10 h-10 rounded-lg object-cover shrink-0"
+                        />
+                        <div class="flex-1">
+                          <span class="text-sm font-medium text-text">{{ option.name }}</span>
+                          <span v-if="option.amount > 1" class="ml-1.5 text-xs text-text-light">({{ option.amount }}x)</span>
+                        </div>
+                      </div>
+                      <i
+                        v-if="selectedComboOptions[group.id] === option.menu_id"
+                        class="pi pi-check text-amber-500 text-xs"
+                      ></i>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="mt-6 flex flex-col-reverse sm:flex-row gap-3">
+                <button
+                  @click="closeComboModal"
+                  class="w-full sm:flex-1 border border-secondary rounded-xl py-3 text-sm font-medium text-text-light hover:bg-secondary transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  @click="confirmComboAndAdd"
+                  :disabled="!allComboGroupsSelected || isLoading"
+                  class="w-full sm:flex-1 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3.5 text-sm font-semibold transition-colors flex items-center justify-center gap-2"
                 >
                   <i v-if="isLoading" class="pi pi-spin pi-spinner text-xs"></i>
                   <i v-else class="pi pi-shopping-cart text-xs"></i>
