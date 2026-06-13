@@ -111,7 +111,7 @@ function handleOrder() {
   showPaymentModal.value = true
 }
 
-async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
+async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr' | 'debit') {
   const normalizedType = type === 'qr' ? 'qris' : type
   isOrdering.value = true
   transactionError.value = null
