@@ -29,6 +29,11 @@ const router = createRouter({
       meta: { requiresLocation: true },
     },
     {
+      path: '/history',
+      name: 'history',
+      component: () => import('@/views/HistoryView.vue'),
+    },
+    {
       path: '/invalid',
       name: 'invalid',
       component: () => import('@/views/InvalidAccessView.vue'),

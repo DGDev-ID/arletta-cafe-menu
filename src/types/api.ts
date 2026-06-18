@@ -18,6 +18,8 @@ export interface Cafe {
   address: string
   address_coordinate: string
   description: string
+  ppn_fee: string | null
+  qris_fee: string | null
   created_at: string
   updated_at: string
 }

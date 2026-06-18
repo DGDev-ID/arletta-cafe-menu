@@ -9,11 +9,13 @@ import type { TransactionResponse, PromoData } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
 import QrisPaymentStatus from '@/components/checkout/QrisPaymentStatus.vue'
+import { useOrderHistoryStore } from '@/stores/orderHistory'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 const cafeStore = useCafeStore()
+const historyStore = useOrderHistoryStore()
 const { cafeName, locationLabel, locationIcon, deliveryMessage } = useLocation()
 
 onMounted(() => {
@@ -62,7 +64,16 @@ const discountAmount = computed(() => {
   return Math.min(value, subtotal)
 })
 
-const finalPrice = computed(() => cartStore.totalPrice - discountAmount.value)
+const taxAmount = computed(() => {
+  if (!cafeStore.cafe?.ppn_fee) return 0
+  const feePercent = parseFloat(cafeStore.cafe.ppn_fee)
+  if (isNaN(feePercent) || feePercent <= 0) return 0
+  
+  const subtotalAfterDiscount = cartStore.totalPrice - discountAmount.value
+  return subtotalAfterDiscount * (feePercent / 100)
+})
+
+const finalPrice = computed(() => Math.floor(cartStore.totalPrice - discountAmount.value + taxAmount.value))
 
 async function handleCheckPromo() {
   const code = promoInput.value.trim().toUpperCase() // ← tambah .toUpperCase()
@@ -142,6 +153,10 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
     } else {
       showManualPayment.value = true
       savedCustomer.value = customerName.value.trim()
+      // Save to history on manual payment (order is immediately accepted)
+      const num = generateOrderNumber()
+      orderNumber.value = num
+      historyStore.addOrder(res.data, num, customerName.value.trim())
       cartStore.clearCart()
     }
   } catch (err: unknown) {
@@ -176,13 +191,21 @@ async function handlePaymentSelect(type: 'manual' | 'qris' | 'qr') {
 
 function handleQrisSuccess() {
   cartStore.clearCart()
-  orderNumber.value = generateOrderNumber()
+  const num = generateOrderNumber()
+  orderNumber.value = num
+  if (transactionData.value) {
+    historyStore.addOrder(transactionData.value, num, savedCustomer.value)
+  }
   orderSuccess.value = true
   showQrisPayment.value = false
 }
 
 function handleManualSuccess() {
-  orderNumber.value = generateOrderNumber()
+  const num = generateOrderNumber()
+  orderNumber.value = num
+  if (transactionData.value) {
+    historyStore.addOrder(transactionData.value, num, savedCustomer.value)
+  }
   orderSuccess.value = true
   showManualPayment.value = false
 }
@@ -244,6 +267,13 @@ function backToMenu() {
           <i class="pi pi-arrow-left text-sm"></i>
           Kembali ke Menu
         </button>
+        <RouterLink
+          :to="{ path: '/history', query: route.query }"
+          class="w-full mt-3 bg-secondary hover:bg-secondary-light text-text font-medium py-3 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 text-sm no-underline"
+        >
+          <i class="pi pi-clock text-sm"></i>
+          Lihat Riwayat Pesanan
+        </RouterLink>
       </div>
     </div>
 
@@ -484,8 +514,11 @@ function backToMenu() {
           </div>
 
           <div class="flex justify-between items-center py-2 border-t border-secondary">
-            <span class="text-sm text-text-light">Pajak & Layanan</span>
-            <span class="text-sm font-medium text-text-light">Termasuk</span>
+            <span class="text-sm text-text-light">
+              Pajak & Layanan <template v-if="cafeStore.cafe?.ppn_fee && parseFloat(cafeStore.cafe.ppn_fee) > 0">({{ parseFloat(cafeStore.cafe.ppn_fee) }}%)</template>
+            </span>
+            <span class="text-sm font-medium text-text-light" v-if="!cafeStore.cafe?.ppn_fee || parseFloat(cafeStore.cafe.ppn_fee) <= 0">Termasuk</span>
+            <span class="text-sm font-medium text-text" v-else>Rp {{ Math.floor(taxAmount).toLocaleString('id-ID') }}</span>
           </div>
           <div class="flex justify-between items-center pt-3 mt-2 border-t-2 border-primary/20">
             <span class="text-base font-bold text-text">Total</span>

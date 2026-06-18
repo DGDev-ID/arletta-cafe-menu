@@ -2,11 +2,13 @@
 import { RouterLink, useRoute } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useCafeStore } from '@/stores/cafe'
+import { useOrderHistoryStore } from '@/stores/orderHistory'
 import { useLocation } from '@/composables/useLocation'
 
 const route = useRoute()
 const cartStore = useCartStore()
 const cafeStore = useCafeStore()
+const historyStore = useOrderHistoryStore()
 const { cafeName, locationLabel } = useLocation()
 </script>
 
@@ -36,6 +38,19 @@ const { cafeName, locationLabel } = useLocation()
               </div>
             </RouterLink>
 
+            <div class="flex items-center gap-2">
+            <!-- History Icon -->
+            <RouterLink
+              :to="{ path: '/history', query: route.query }"
+              class="relative flex items-center gap-1.5 text-white no-underline bg-white/15 hover:bg-white/25 px-2.5 py-2 rounded-xl transition-all duration-200 backdrop-blur-sm"
+            >
+              <i class="pi pi-clock text-lg"></i>
+              <span
+                v-if="historyStore.hasOrders"
+                class="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-primary-dark"
+              ></span>
+            </RouterLink>
+
             <!-- Cart Icon -->
             <RouterLink
               :to="{ path: '/cart', query: route.query }"
@@ -57,6 +72,7 @@ const { cafeName, locationLabel } = useLocation()
                 {{ cartStore.totalItems }}
               </span>
             </RouterLink>
+            </div>
           </div>
         </div>
       </div>
