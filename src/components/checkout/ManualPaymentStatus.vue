@@ -77,12 +77,21 @@ async function pollStatus() {
   try {
     const res = await getTransactionStatus(props.transaction.transaction_id)
     if (res.success) {
-      status.value = res.data as PaymentStatus
-      if (res.data === 'success') {
+      let fetchedStatus = res.data as PaymentStatus
+      
+      // Jika pesanan sudah diapprove oleh dashboard (masuk ke in_order),
+      // langsung ubah menjadi success agar tampilan sukses muncul.
+      if (fetchedStatus === 'in_order') {
+        fetchedStatus = 'success'
+      }
+
+      status.value = fetchedStatus
+      
+      if (fetchedStatus === 'success') {
         stopPolling()
         setTimeout(() => emit('success'), 1500)
       }
-      if (res.data === 'failed') {
+      if (fetchedStatus === 'failed') {
         stopPolling()
       }
     }

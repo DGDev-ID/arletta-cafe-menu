@@ -45,10 +45,6 @@ const { cafeName, locationLabel } = useLocation()
               class="relative flex items-center gap-1.5 text-white no-underline bg-white/15 hover:bg-white/25 px-2.5 py-2 rounded-xl transition-all duration-200 backdrop-blur-sm"
             >
               <i class="pi pi-clock text-lg"></i>
-              <span
-                v-if="historyStore.hasOrders"
-                class="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-accent rounded-full border-2 border-primary-dark"
-              ></span>
             </RouterLink>
 
             <!-- Cart Icon -->
