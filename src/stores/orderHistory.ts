@@ -23,7 +23,7 @@ export interface HistoryOrder {
   /** Total price after fee */
   totalPrice: number
   /** Payment method */
-  paymentType: 'manual' | 'qris'
+  paymentType: 'manual' | 'qris' | 'debit'
   /** Menu items */
   details: {
     menuName: string

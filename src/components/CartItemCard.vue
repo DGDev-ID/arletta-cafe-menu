@@ -82,6 +82,19 @@ async function handleDecrease(itemId: number) {
         </span>
       </div>
 
+      <!-- Combo option badges — tampil jika ada pilihan paket combo -->
+      <div v-if="item.selected_combo_options?.length" class="flex flex-wrap gap-1 mt-1.5">
+        <span
+          v-for="co in item.selected_combo_options"
+          :key="co.group_id"
+          class="inline-flex items-center gap-1 text-[10px] font-bold tracking-wide bg-gradient-to-r from-amber-500/15 to-amber-500/5 text-amber-700 border border-amber-300/40 px-2 py-0.5 rounded-full shadow-sm"
+          style="letter-spacing: 0.03em"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500/70 shrink-0"></span>
+          {{ co.menu_name || `Menu #${co.menu_id}` }}
+        </span>
+      </div>
+
       <p class="text-sm font-bold text-primary mt-0.5">
         Rp {{ item.price.toLocaleString('id-ID') }}
       </p>

@@ -5,7 +5,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'select', type: 'manual' | 'qr'): void
+  (e: 'select', type: 'manual' | 'qr' | 'debit'): void
   (e: 'close'): void
 }>()
 </script>
@@ -38,6 +38,25 @@ const emit = defineEmits<{
             <div>
               <p class="text-sm font-semibold text-text">Cash / Manual</p>
               <p class="text-xs text-text-light mt-0.5">Bayar langsung ke kasir</p>
+            </div>
+            <i v-if="isLoading" class="pi pi-spinner pi-spin text-primary ml-auto"></i>
+            <i v-else class="pi pi-chevron-right text-text-light ml-auto text-xs"></i>
+          </button>
+
+          <!-- Debit -->
+          <button
+            @click="emit('select', 'debit')"
+            :disabled="isLoading"
+            class="flex items-center gap-4 p-4 rounded-xl border-2 border-secondary hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left"
+          >
+            <div
+              class="w-11 h-11 rounded-xl bg-secondary-light flex items-center justify-center shrink-0"
+            >
+              <i class="pi pi-credit-card text-xl text-primary"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-text">Debit Card</p>
+              <p class="text-xs text-text-light mt-0.5">Bayar dengan kartu di kasir</p>
             </div>
             <i v-if="isLoading" class="pi pi-spinner pi-spin text-primary ml-auto"></i>
             <i v-else class="pi pi-chevron-right text-text-light ml-auto text-xs"></i>

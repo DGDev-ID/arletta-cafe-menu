@@ -155,7 +155,9 @@ function backToMenu() {
                     :class="
                       order.paymentType === 'qris'
                         ? 'bg-orange-50 text-orange-600 border border-orange-200'
-                        : 'bg-green-50 text-green-600 border border-green-200'
+                        : order.paymentType === 'debit'
+                          ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                          : 'bg-green-50 text-green-600 border border-green-200'
                     "
                   >
                     {{ paymentLabel(order.paymentType) }}
