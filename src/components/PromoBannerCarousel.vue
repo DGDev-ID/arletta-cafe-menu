@@ -47,12 +47,16 @@ function stopAutoSlide() {
 
 // Touch events for mobile swipe
 function onTouchStart(e: TouchEvent) {
-  touchStartX.value = e.changedTouches[0].clientX
+  const touch = e.changedTouches[0]
+  if (!touch) return
+  touchStartX.value = touch.clientX
   stopAutoSlide()
 }
 
 function onTouchEnd(e: TouchEvent) {
-  touchEndX.value = e.changedTouches[0].clientX
+  const touch = e.changedTouches[0]
+  if (!touch) return
+  touchEndX.value = touch.clientX
   const diff = touchStartX.value - touchEndX.value
   const threshold = 50
 
@@ -86,8 +90,8 @@ watch(() => props.banners, () => {
   <div v-if="totalBanners === 1" class="w-full">
     <div class="rounded-xl shadow-md overflow-hidden">
       <img
-        :src="banners[0].image_url"
-        :alt="banners[0].title"
+        :src="banners[0]?.image_url"
+        :alt="banners[0]?.title"
         class="w-full h-[180px] sm:h-[220px] object-cover"
         loading="lazy"
       />
