@@ -4,14 +4,17 @@ import { useRouter, useRoute } from 'vue-router'
 import { useCafeStore } from '@/stores/cafe'
 import { useCartStore } from '@/stores/cart'
 import { useLocation } from '@/composables/useLocation'
+import { usePromoBanners } from '@/composables/usePromoBanners'
 import { createOpenBill } from '@/services/api'
 import { useToast } from 'primevue/usetoast'
 import type { Menu, MenuCategory } from '@/types/api'
 import MenuCard from '@/components/MenuCard.vue'
+import PromoBannerCarousel from '@/components/PromoBannerCarousel.vue'
 
 const cafeStore = useCafeStore()
 const cartStore = useCartStore()
 const { cafeName, locationLabel, locationIcon } = useLocation()
+const { banners: promoBanners, isLoading: promoBannersLoading } = usePromoBanners()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
@@ -313,6 +316,11 @@ function clearSearch() {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Promo Banner Carousel -->
+    <div v-if="!promoBannersLoading && promoBanners.length > 0" class="max-w-5xl mx-auto px-4 mt-3 relative z-10">
+      <PromoBannerCarousel :banners="promoBanners" />
     </div>
 
     <!-- Search Bar -->

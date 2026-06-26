@@ -9,6 +9,7 @@ import type {
   CheckPromoRequest,
   CheckPromoResponse,
   LandingPageResponse,
+  PromoBannerResponse,
   SelectedVariant,
 } from '@/types/api'
 
@@ -203,6 +204,17 @@ export async function checkPromoCode(payload: CheckPromoRequest): Promise<CheckP
 
 export async function getLandingPage(): Promise<LandingPageResponse> {
   const url = new URL(`${BASE_URL}/landing-page`)
+  const res = await fetch(url.toString())
+
+  if (!res.ok) {
+    throw new ApiError(res.status, `API error: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+export async function getPromoBanners(): Promise<PromoBannerResponse> {
+  const url = new URL(`${BASE_URL}/promo-banners`)
   const res = await fetch(url.toString())
 
   if (!res.ok) {

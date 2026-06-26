@@ -286,3 +286,18 @@ export interface CartItemVariant {
   menu_id: number
   selected_variants: SelectedVariant[]
 }
+
+// ─── Promo Banners ──────────────────────────────────────────────────────────
+
+export interface PromoBannerItem {
+  id: number
+  title: string
+  image_url: string
+}
+
+export interface PromoBannerResponse {
+  success: boolean
+  message: string
+  data: PromoBannerItem[]
+}
+
