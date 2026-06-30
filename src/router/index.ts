@@ -70,6 +70,10 @@ router.beforeEach(async (to) => {
       return { name: 'invalid' }
     }
   }
+
+  if (cafeStore.isOnlyPreview && (to.name === 'cart' || to.name === 'checkout')) {
+    return { name: 'menu', query: to.query }
+  }
 })
 
 export default router

@@ -2,11 +2,13 @@
 import { ref, computed } from 'vue'
 import type { Menu, SelectedVariant, SelectedComboOption } from '@/types/api'
 import { useCartStore } from '@/stores/cart'
+import { useCafeStore } from '@/stores/cafe'
 import { useToast } from 'primevue/usetoast'
 
 const props = defineProps<{ item: Menu }>()
 
 const cartStore = useCartStore()
+const cafeStore = useCafeStore()
 const toast = useToast()
 const isLoading = ref(false)
 
@@ -281,7 +283,7 @@ async function handleDecrease() {
         </span>
 
         <!-- Quantity controls — hanya untuk menu normal (non-selectable, non-combo) -->
-        <div v-if="inCart && !hasSelectableMaterials && !hasComboGroups" class="flex items-center gap-1.5">
+        <div v-if="inCart && !hasSelectableMaterials && !hasComboGroups && !cafeStore.isOnlyPreview" class="flex items-center gap-1.5">
           <button
             @click="handleDecrease"
             :disabled="isLoading"
@@ -305,9 +307,9 @@ async function handleDecrease() {
           </button>
         </div>
 
-        <!-- Add button -->
+        <!-- Add button (sembunyikan jika only_preview) -->
         <button
-          v-else
+          v-else-if="!cafeStore.isOnlyPreview"
           @click="handleAdd"
           :disabled="item.status !== 'available' || isLoading"
           class="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-xl transition-all duration-200 active:scale-95"

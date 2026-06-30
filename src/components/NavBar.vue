@@ -39,16 +39,18 @@ const { cafeName, locationLabel } = useLocation()
             </RouterLink>
 
             <div class="flex items-center gap-2">
-            <!-- History Icon -->
+            <!-- History Icon (sembunyikan jika only preview) -->
             <RouterLink
+              v-if="!cafeStore.isOnlyPreview"
               :to="{ path: '/history', query: route.query }"
               class="relative flex items-center gap-1.5 text-white no-underline bg-white/15 hover:bg-white/25 px-2.5 py-2 rounded-xl transition-all duration-200 backdrop-blur-sm"
             >
               <i class="pi pi-clock text-lg"></i>
             </RouterLink>
 
-            <!-- Cart Icon -->
+            <!-- Cart Icon (sembunyikan jika only preview) -->
             <RouterLink
+              v-if="!cafeStore.isOnlyPreview"
               :to="{ path: '/cart', query: route.query }"
               class="relative flex items-center gap-1.5 text-white no-underline bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl transition-all duration-200 backdrop-blur-sm"
             >
@@ -68,6 +70,15 @@ const { cafeName, locationLabel } = useLocation()
                 {{ cartStore.totalItems }}
               </span>
             </RouterLink>
+
+            <!-- Preview Mode Badge -->
+            <div
+              v-if="cafeStore.isOnlyPreview"
+              class="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-2 rounded-xl text-white text-xs font-semibold"
+            >
+              <i class="pi pi-eye text-sm"></i>
+              <span class="hidden sm:inline">Preview</span>
+            </div>
             </div>
           </div>
         </div>

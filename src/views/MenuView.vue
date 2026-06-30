@@ -33,6 +33,11 @@ function initOpenBillFlow() {
   if (initialized.value) return
   initialized.value = true
 
+  if (cafeStore.isOnlyPreview) {
+    cartStore.clearOpenBillMode()
+    return
+  }
+
   if (!cafeStore.isOpenBillTable) {
     cartStore.clearOpenBillMode()
     return

@@ -31,6 +31,7 @@ export interface CafeTable {
   status: string
   description: string
   is_open_bill: number
+  only_preview: boolean
   created_at: string
   updated_at: string
 }

@@ -31,6 +31,9 @@ export const useCafeStore = defineStore('cafe', () => {
   // Apakah meja ini mendukung open bill
   const isOpenBillTable = computed(() => table.value?.is_open_bill === 1)
 
+  // Apakah meja ini hanya mode preview (tidak bisa memesan)
+  const isOnlyPreview = computed(() => table.value?.only_preview === true)
+
   // Apakah sudah ada open bill aktif (ada transaction dengan details)
   const hasActiveOpenBill = computed(
     () => isOpenBillTable.value && activeTransaction.value !== null,
@@ -101,6 +104,7 @@ export const useCafeStore = defineStore('cafe', () => {
     isLoading,
     error,
     isOpenBillTable,
+    isOnlyPreview,
     hasActiveOpenBill,
     topCategories,
     allMenus,
