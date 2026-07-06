@@ -14,10 +14,13 @@ import PromoBannerCarousel from '@/components/PromoBannerCarousel.vue'
 const cafeStore = useCafeStore()
 const cartStore = useCartStore()
 const { cafeName, locationLabel, locationIcon } = useLocation()
-const { banners: promoBanners, isLoading: promoBannersLoading } = usePromoBanners()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+
+// Ambil unique_id cafe dari query param (?cafe_id=xxx)
+const cafeUniqueId = computed(() => (route.query.cafe_id as string) ?? '')
+const { banners: promoBanners, isLoading: promoBannersLoading } = usePromoBanners(cafeUniqueId.value)
 
 // ── Open Bill Modal ─────────────────────────────────────────────
 const showOrderTypeModal = ref(false)

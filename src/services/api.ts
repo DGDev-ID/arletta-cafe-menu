@@ -213,8 +213,9 @@ export async function getLandingPage(): Promise<LandingPageResponse> {
   return res.json()
 }
 
-export async function getPromoBanners(): Promise<PromoBannerResponse> {
+export async function getPromoBanners(cafeId: string): Promise<PromoBannerResponse> {
   const url = new URL(`${BASE_URL}/promo-banners`)
+  url.searchParams.set('cafe_id', cafeId)
   const res = await fetch(url.toString())
 
   if (!res.ok) {
