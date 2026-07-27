@@ -57,6 +57,7 @@ async function handleSubmitOpenBill() {
       orders: cartStore.items.map((item) => ({
         menu_id: item.id,
         amount: item.quantity,
+        description: item.description,
       })),
     })
 

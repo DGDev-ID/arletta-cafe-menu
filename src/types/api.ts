@@ -169,7 +169,7 @@ export interface CreateOpenBillResponse {
 
 export interface AddOrderOpenBillRequest {
   cafe_table_id: number
-  orders: { menu_id: number; amount: number }[]
+  orders: { menu_id: number; amount: number; description?: string | null }[]
 }
 
 export interface AddOrderOpenBillResponse {
