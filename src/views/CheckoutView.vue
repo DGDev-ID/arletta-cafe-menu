@@ -9,6 +9,7 @@ import type { TransactionResponse, PromoData } from '@/types/api'
 import PaymentModal from '@/components/checkout/PaymentModal.vue'
 import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
 import QrisPaymentStatus from '@/components/checkout/QrisPaymentStatus.vue'
+import FeedbackSheet from '@/components/checkout/FeedbackSheet.vue'
 import { useOrderHistoryStore } from '@/stores/orderHistory'
 
 const route = useRoute()
@@ -30,6 +31,10 @@ const orderNumber = ref('')
 const customerName = ref('')
 const savedCustomer = ref('')
 const isCustomerValid = computed(() => customerName.value.trim().length > 0)
+
+// Feedback
+const showFeedback = ref(false)
+const feedbackTransactionId = ref<number | null>(null)
 
 // Payment
 const showPaymentModal = ref(false)
@@ -196,9 +201,12 @@ function handleQrisSuccess() {
   orderNumber.value = num
   if (transactionData.value) {
     historyStore.addOrder(transactionData.value, num, savedCustomer.value)
+    feedbackTransactionId.value = transactionData.value.transaction_id
   }
   orderSuccess.value = true
   showQrisPayment.value = false
+  // Show feedback after short delay
+  setTimeout(() => { showFeedback.value = true }, 800)
 }
 
 function handleManualSuccess() {
@@ -206,9 +214,12 @@ function handleManualSuccess() {
   orderNumber.value = num
   if (transactionData.value) {
     historyStore.addOrder(transactionData.value, num, savedCustomer.value)
+    feedbackTransactionId.value = transactionData.value.transaction_id
   }
   orderSuccess.value = true
   showManualPayment.value = false
+  // Show feedback after short delay
+  setTimeout(() => { showFeedback.value = true }, 800)
 }
 
 function backToMenu() {
@@ -580,5 +591,17 @@ function backToMenu() {
       @select="handlePaymentSelect"
       @close="showPaymentModal = false"
     />
+
+    <!-- Feedback Sheet (opsional, muncul setelah order sukses) -->
+    <Teleport to="body">
+      <template v-if="showFeedback && feedbackTransactionId">
+        <FeedbackSheet
+          :transaction-id="feedbackTransactionId"
+          :customer-name="savedCustomer"
+          @close="showFeedback = false"
+          @submitted="showFeedback = false"
+        />
+      </template>
+    </Teleport>
   </div>
 </template>

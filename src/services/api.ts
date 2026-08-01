@@ -224,3 +224,33 @@ export async function getPromoBanners(cafeId: string): Promise<PromoBannerRespon
 
   return res.json()
 }
+
+export interface SubmitFeedbackRequest {
+  transaction_id: number
+  rating: number
+  comment?: string | null
+}
+
+export interface SubmitFeedbackResponse {
+  success: boolean
+  message: string
+  data?: unknown
+}
+
+export async function submitFeedback(payload: SubmitFeedbackRequest): Promise<SubmitFeedbackResponse> {
+  const url = new URL(`${BASE_URL}/submit-feedback`)
+
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    return { success: false, message: json?.message ?? 'Gagal mengirim feedback' }
+  }
+
+  return json
+}
