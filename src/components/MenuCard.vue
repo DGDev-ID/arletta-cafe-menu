@@ -4,12 +4,14 @@ import type { Menu, SelectedVariant, SelectedComboOption } from '@/types/api'
 import { useCartStore } from '@/stores/cart'
 import { useCafeStore } from '@/stores/cafe'
 import { useToast } from 'primevue/usetoast'
+import { useOrderTimeLimit } from '@/composables/useOrderTimeLimit'
 
 const props = defineProps<{ item: Menu }>()
 
 const cartStore = useCartStore()
 const cafeStore = useCafeStore()
 const toast = useToast()
+const { isOrderingDisabled } = useOrderTimeLimit()
 const isLoading = ref(false)
 
 // Variant selection state
@@ -157,7 +159,7 @@ async function confirmComboAndAdd() {
 }
 
 async function handleAdd() {
-  if (isLoading.value) return
+  if (isLoading.value || isOrderingDisabled.value) return
   if (hasComboGroups.value) {
     openComboModal()
     return
@@ -197,7 +199,7 @@ async function handleAdd() {
 }
 
 async function handleIncrease() {
-  if (isLoading.value) return
+  if (isLoading.value || isOrderingDisabled.value) return
   isLoading.value = true
   try {
     const result = await cartStore.checkAndIncrease(props.item)
@@ -222,7 +224,7 @@ async function handleIncrease() {
 }
 
 async function handleDecrease() {
-  if (isLoading.value) return
+  if (isLoading.value || isOrderingDisabled.value) return
   isLoading.value = true
   try {
     await cartStore.checkAndDecrease(props.item)
@@ -286,7 +288,7 @@ async function handleDecrease() {
         <div v-if="inCart && !hasSelectableMaterials && !hasComboGroups && !cafeStore.isOnlyPreview" class="flex items-center gap-1.5">
           <button
             @click="handleDecrease"
-            :disabled="isLoading"
+            :disabled="isLoading || isOrderingDisabled"
             class="w-8 h-8 flex items-center justify-center rounded-lg bg-secondary hover:bg-accent hover:text-white text-text transition-colors duration-200 shrink-0 disabled:opacity-50"
           >
             <i
@@ -299,7 +301,7 @@ async function handleDecrease() {
           <span class="text-sm font-bold text-text w-6 text-center shrink-0">{{ quantity }}</span>
           <button
             @click="handleIncrease"
-            :disabled="isLoading"
+            :disabled="isLoading || isOrderingDisabled"
             class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary hover:bg-primary-dark text-white transition-colors duration-200 shrink-0 disabled:opacity-50"
           >
             <i v-if="!isLoading" class="pi pi-plus text-xs"></i>
@@ -307,11 +309,10 @@ async function handleDecrease() {
           </button>
         </div>
 
-        <!-- Add button (sembunyikan jika only_preview) -->
         <button
           v-else-if="!cafeStore.isOnlyPreview"
           @click="handleAdd"
-          :disabled="item.status !== 'available' || isLoading"
+          :disabled="item.status !== 'available' || isLoading || isOrderingDisabled"
           class="w-full flex items-center justify-center gap-1.5 bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2 rounded-xl transition-all duration-200 active:scale-95"
         >
           <i v-if="!isLoading" class="pi pi-plus text-xs"></i>

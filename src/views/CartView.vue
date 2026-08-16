@@ -6,6 +6,7 @@ import { useCafeStore } from '@/stores/cafe'
 import { useToast } from 'primevue/usetoast'
 import { addOrderOpenBill } from '@/services/api'
 import CartItemCard from '@/components/CartItemCard.vue'
+import { useOrderTimeLimit } from '@/composables/useOrderTimeLimit'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +15,7 @@ const cafeStore = useCafeStore()
 const toast = useToast()
 const isChecking = ref(false)
 const isSubmittingOpenBill = ref(false)
+const { isOrderingDisabled } = useOrderTimeLimit()
 
 // Apakah mode open bill aktif
 const isOpenBill = computed(() => cartStore.isOpenBillMode)
@@ -287,7 +289,7 @@ async function handleSubmitOpenBill() {
           </RouterLink>
           <button
             @click="handleSubmitOpenBill"
-            :disabled="isSubmittingOpenBill || !canSubmitOpenBill"
+            :disabled="isSubmittingOpenBill || !canSubmitOpenBill || isOrderingDisabled"
             class="flex-1 text-center bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-1.5"
           >
             <i v-if="isSubmittingOpenBill" class="pi pi-spinner pi-spin text-xs"></i>
@@ -325,7 +327,7 @@ async function handleSubmitOpenBill() {
           </RouterLink>
           <button
             @click="handleCheckout"
-            :disabled="isChecking"
+            :disabled="isChecking || isOrderingDisabled"
             class="flex-1 text-center bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-1.5"
           >
             <i v-if="isChecking" class="pi pi-spinner pi-spin text-xs"></i>

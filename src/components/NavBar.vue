@@ -4,12 +4,14 @@ import { useCartStore } from '@/stores/cart'
 import { useCafeStore } from '@/stores/cafe'
 import { useOrderHistoryStore } from '@/stores/orderHistory'
 import { useLocation } from '@/composables/useLocation'
+import { useOrderTimeLimit } from '@/composables/useOrderTimeLimit'
 
 const route = useRoute()
 const cartStore = useCartStore()
 const cafeStore = useCafeStore()
 const historyStore = useOrderHistoryStore()
 const { cafeName, locationLabel } = useLocation()
+const { isOrderingDisabled } = useOrderTimeLimit()
 </script>
 
 <template>
@@ -95,6 +97,15 @@ const { cafeName, locationLabel } = useLocation()
       <span class="font-bold">{{ cafeStore.activeTransaction.cust_name ?? 'Pelanggan' }}</span>
       <span class="opacity-60">·</span>
       <span class="opacity-70">Pembayaran di kasir</span>
+    </div>
+
+    <!-- Time Limit banner -->
+    <div
+      v-if="isOrderingDisabled"
+      class="bg-red-500 text-white text-xs sm:text-sm font-semibold py-2 px-4 flex items-center justify-center text-center gap-2 leading-relaxed"
+    >
+      <i class="pi pi-exclamation-triangle text-xs sm:text-sm shrink-0"></i>
+      <span>Mohon maaf, pemesanan tidak bisa dilakukan pada jam 23:45-00:15 malam.</span>
     </div>
   </div>
 </template>

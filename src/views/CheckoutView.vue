@@ -11,6 +11,7 @@ import ManualPaymentStatus from '@/components/checkout/ManualPaymentStatus.vue'
 import QrisPaymentStatus from '@/components/checkout/QrisPaymentStatus.vue'
 import FeedbackSheet from '@/components/checkout/FeedbackSheet.vue'
 import { useOrderHistoryStore } from '@/stores/orderHistory'
+import { useOrderTimeLimit } from '@/composables/useOrderTimeLimit'
 
 const route = useRoute()
 const router = useRouter()
@@ -18,6 +19,7 @@ const cartStore = useCartStore()
 const cafeStore = useCafeStore()
 const historyStore = useOrderHistoryStore()
 const { cafeName, locationLabel, locationIcon, deliveryMessage } = useLocation()
+const { isOrderingDisabled } = useOrderTimeLimit()
 
 onMounted(() => {
   if (cartStore.isOpenBillMode) {
@@ -122,7 +124,7 @@ function generateOrderNumber() {
 }
 
 function handleOrder() {
-  if (!isCustomerValid.value) return
+  if (!isCustomerValid.value || isOrderingDisabled.value) return
   transactionError.value = null
   showPaymentModal.value = true
 }
@@ -569,7 +571,7 @@ function backToMenu() {
       <div class="max-w-3xl mx-auto">
         <button
           @click="handleOrder"
-          :disabled="isOrdering || !isCustomerValid"
+          :disabled="isOrdering || !isCustomerValid || isOrderingDisabled"
           class="w-full bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-base"
         >
           <template v-if="isOrdering">
