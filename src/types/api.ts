@@ -9,6 +9,7 @@ export interface CafeTableData {
   table: CafeTable
   menu_categories: MenuCategory[]
   transaction?: ActiveTransaction | null
+  can_qris_payment?: boolean
 }
 
 export interface Cafe {

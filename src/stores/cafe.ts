@@ -24,6 +24,7 @@ export const useCafeStore = defineStore('cafe', () => {
   const table = ref<CafeTable | null>(null)
   const menuCategories = ref<MenuCategory[]>([])
   const activeTransaction = ref<ActiveTransaction | null>(null)
+  const canQrisPayment = ref<boolean>(false)
   const isLoaded = ref(false)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -76,6 +77,7 @@ export const useCafeStore = defineStore('cafe', () => {
       menuCategories.value = normalizeCategories(res.data.menu_categories)
       // Simpan active transaction jika ada (open bill pending)
       activeTransaction.value = res.data.transaction ?? null
+      canQrisPayment.value = Boolean(res.data.can_qris_payment)
       isLoaded.value = true
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : 'Unknown error'
@@ -100,6 +102,7 @@ export const useCafeStore = defineStore('cafe', () => {
     table,
     menuCategories,
     activeTransaction,
+    canQrisPayment,
     isLoaded,
     isLoading,
     error,

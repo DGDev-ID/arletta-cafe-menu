@@ -1,13 +1,25 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+import { useCafeStore } from '@/stores/cafe'
+
+const props = defineProps<{
   visible: boolean
   isLoading: boolean
+  canQris?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'select', type: 'manual' | 'qr' | 'debit'): void
   (e: 'close'): void
 }>()
+
+const cafeStore = useCafeStore()
+const isQrisAvailable = computed(() => {
+  if (props.canQris !== undefined) {
+    return Boolean(props.canQris)
+  }
+  return Boolean(cafeStore.canQrisPayment)
+})
 </script>
 
 <template>
@@ -64,6 +76,7 @@ const emit = defineEmits<{
 
           <!-- QRIS -->
           <button
+            v-if="isQrisAvailable"
             @click="emit('select', 'qr')"
             :disabled="isLoading"
             class="flex items-center gap-4 p-4 rounded-xl border-2 border-secondary hover:border-primary hover:bg-primary/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-left"

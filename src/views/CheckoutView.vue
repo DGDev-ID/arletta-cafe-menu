@@ -590,6 +590,7 @@ function backToMenu() {
     <PaymentModal
       :visible="showPaymentModal"
       :is-loading="isOrdering"
+      :can-qris="cafeStore.canQrisPayment"
       @select="handlePaymentSelect"
       @close="showPaymentModal = false"
     />
